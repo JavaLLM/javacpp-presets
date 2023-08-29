@@ -27,6 +27,10 @@ public class ggml_type_traits_t extends Pointer {
             return new ggml_type_traits_t((Pointer)this).offsetAddress(i);
         }
     
+        public native @Cast("const char*") BytePointer type_name(); public native ggml_type_traits_t type_name(BytePointer setter);
+        public native int blck_size(); public native ggml_type_traits_t blck_size(int setter);
+        public native @Cast("size_t") long type_size(); public native ggml_type_traits_t type_size(long setter);
+        public native @Cast("bool") boolean is_quantized(); public native ggml_type_traits_t is_quantized(boolean setter);
         public native ggml_to_float_t to_float(); public native ggml_type_traits_t to_float(ggml_to_float_t setter);
         public native ggml_from_float_t from_float(); public native ggml_type_traits_t from_float(ggml_from_float_t setter);
         public native ggml_from_float_t from_float_reference(); public native ggml_type_traits_t from_float_reference(ggml_from_float_t setter);

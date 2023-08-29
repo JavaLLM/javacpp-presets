@@ -145,13 +145,16 @@ public class ggml extends org.javallm.llamacpp.presets.ggml {
 // The data of the tensor is accessed via the "data" pointer. For example:
 //
 //   {
-//       struct ggml_tensor * a = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, 2, 3);
+//       const int nx = 2;
+//       const int ny = 3;
 //
-//       // a[2, 1] = 1.0f;
-//       *(float *) ((char *) a->data + 2*a->nb[1] + 1*a->nb[0]) = 1.0f;
+//       struct ggml_tensor * a = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, nx, ny);
 //
-//       // a[0, 2] = 2.0f;
-//       *(float *) ((char *) a->data + 0*a->nb[1] + 2*a->nb[0]) = 2.0f;
+//       for (int y = 0; y < ny; y++) {
+//           for (int x = 0; x < nx; x++) {
+//               *(float *) ((char *) a->data + y*a->nb[1] + x*a->nb[0]) = x + y;
+//           }
+//       }
 //
 //       ...
 //   }
@@ -189,6 +192,15 @@ public class ggml extends org.javallm.llamacpp.presets.ggml {
 // #    define GGML_API
 // #endif
 
+// TODO: support for clang
+// #ifdef __GNUC__
+// #    define GGML_DEPRECATED(func, hint) func __attribute__((deprecated(hint)))
+// #elif defined(_MSC_VER)
+// #    define GGML_DEPRECATED(func, hint) __declspec(deprecated(hint)) func
+// #else
+// #    define GGML_DEPRECATED(func, hint) func
+// #endif
+
 // #include <stdint.h>
 // #include <stddef.h>
 // #include <stdbool.h>
@@ -204,15 +216,26 @@ public static final int GGML_MAX_NODES =         4096;
 public static final int GGML_MAX_PARAMS =        256;
 public static final int GGML_MAX_CONTEXTS =      64;
 public static final int GGML_MAX_SRC =           6;
-public static final int GGML_MAX_NAME =          48;
+public static final int GGML_MAX_NAME =          64;
+public static final int GGML_MAX_OP_PARAMS =     32;
 public static final int GGML_DEFAULT_N_THREADS = 4;
 
+// #if UINTPTR_MAX == 0xFFFFFFFF
+    public static final int GGML_MEM_ALIGN = 4;
+// #else
+// #endif
 
 public static final int GGML_EXIT_SUCCESS = 0;
 public static final int GGML_EXIT_ABORTED = 1;
 
+public static final int GGUF_MAGIC =   0x46554747; // "GGUF"
+public static final int GGUF_VERSION = 2;
+
+public static final int GGUF_DEFAULT_ALIGNMENT = 32;
+
 // #define GGML_UNUSED(x) (void)(x)
 
+// #define GGML_PAD(x, n) (((x) + (n) - 1) & ~((n) - 1))
 
 // #define GGML_ASSERT(x)
 //     do {
@@ -249,7 +272,8 @@ public static final int GGML_EXIT_ABORTED = 1;
 // #ifdef  __cplusplus
 // #endif
 
-// #ifdef __ARM_NEON
+// #if defined(__ARM_NEON) && defined(__CUDACC__)
+// #elif defined(__ARM_NEON)
 // #else
 // #endif
 
@@ -336,63 +360,87 @@ public static final int GGML_EXIT_ABORTED = 1;
         GGML_OP_ARGMAX = 14,
         GGML_OP_REPEAT = 15,
         GGML_OP_REPEAT_BACK = 16,
-        GGML_OP_ABS = 17,
-        GGML_OP_SGN = 18,
-        GGML_OP_NEG = 19,
-        GGML_OP_STEP = 20,
-        GGML_OP_TANH = 21,
-        GGML_OP_ELU = 22,
-        GGML_OP_RELU = 23,
-        GGML_OP_GELU = 24,
-        GGML_OP_GELU_QUICK = 25,
-        GGML_OP_SILU = 26,
-        GGML_OP_SILU_BACK = 27,
-        GGML_OP_NORM = 28, // normalize
-        GGML_OP_RMS_NORM = 29,
-        GGML_OP_RMS_NORM_BACK = 30,
+        GGML_OP_CONCAT = 17,
+        GGML_OP_SILU_BACK = 18,
+        GGML_OP_NORM = 19, // normalize
+        GGML_OP_RMS_NORM = 20,
+        GGML_OP_RMS_NORM_BACK = 21,
+        GGML_OP_GROUP_NORM = 22,
 
-        GGML_OP_MUL_MAT = 31,
-        GGML_OP_OUT_PROD = 32,
+        GGML_OP_MUL_MAT = 23,
+        GGML_OP_OUT_PROD = 24,
 
-        GGML_OP_SCALE = 33,
-        GGML_OP_SET = 34,
-        GGML_OP_CPY = 35,
-        GGML_OP_CONT = 36,
-        GGML_OP_RESHAPE = 37,
-        GGML_OP_VIEW = 38,
-        GGML_OP_PERMUTE = 39,
-        GGML_OP_TRANSPOSE = 40,
-        GGML_OP_GET_ROWS = 41,
-        GGML_OP_GET_ROWS_BACK = 42,
-        GGML_OP_DIAG = 43,
-        GGML_OP_DIAG_MASK_INF = 44,
-        GGML_OP_DIAG_MASK_ZERO = 45,
-        GGML_OP_SOFT_MAX = 46,
-        GGML_OP_SOFT_MAX_BACK = 47,
-        GGML_OP_ROPE = 48,
-        GGML_OP_ROPE_BACK = 49,
-        GGML_OP_ALIBI = 50,
-        GGML_OP_CLAMP = 51,
-        GGML_OP_CONV_1D = 52,
-        GGML_OP_CONV_2D = 53,
+        GGML_OP_SCALE = 25,
+        GGML_OP_SET = 26,
+        GGML_OP_CPY = 27,
+        GGML_OP_CONT = 28,
+        GGML_OP_RESHAPE = 29,
+        GGML_OP_VIEW = 30,
+        GGML_OP_PERMUTE = 31,
+        GGML_OP_TRANSPOSE = 32,
+        GGML_OP_GET_ROWS = 33,
+        GGML_OP_GET_ROWS_BACK = 34,
+        GGML_OP_DIAG = 35,
+        GGML_OP_DIAG_MASK_INF = 36,
+        GGML_OP_DIAG_MASK_ZERO = 37,
+        GGML_OP_SOFT_MAX = 38,
+        GGML_OP_SOFT_MAX_BACK = 39,
+        GGML_OP_ROPE = 40,
+        GGML_OP_ROPE_BACK = 41,
+        GGML_OP_ALIBI = 42,
+        GGML_OP_CLAMP = 43,
+        GGML_OP_CONV_1D = 44,
+        GGML_OP_CONV_2D = 45,
+        GGML_OP_CONV_TRANSPOSE_2D = 46,
+        GGML_OP_POOL_1D = 47,
+        GGML_OP_POOL_2D = 48,
 
-        GGML_OP_FLASH_ATTN = 54,
-        GGML_OP_FLASH_FF = 55,
-        GGML_OP_FLASH_ATTN_BACK = 56,
-        GGML_OP_WIN_PART = 57,
-        GGML_OP_WIN_UNPART = 58,
+        GGML_OP_UPSCALE = 49, // nearest interpolate
 
-        GGML_OP_MAP_UNARY = 59,
-        GGML_OP_MAP_BINARY = 60,
+        GGML_OP_FLASH_ATTN = 50,
+        GGML_OP_FLASH_FF = 51,
+        GGML_OP_FLASH_ATTN_BACK = 52,
+        GGML_OP_WIN_PART = 53,
+        GGML_OP_WIN_UNPART = 54,
+        GGML_OP_GET_REL_POS = 55,
+        GGML_OP_ADD_REL_POS = 56,
 
-        GGML_OP_MAP_CUSTOM1 = 61,
-        GGML_OP_MAP_CUSTOM2 = 62,
-        GGML_OP_MAP_CUSTOM3 = 63,
+        GGML_OP_UNARY = 57,
 
-        GGML_OP_CROSS_ENTROPY_LOSS = 64,
-        GGML_OP_CROSS_ENTROPY_LOSS_BACK = 65,
+        GGML_OP_MAP_UNARY = 58,
+        GGML_OP_MAP_BINARY = 59,
 
-        GGML_OP_COUNT = 66;
+        GGML_OP_MAP_CUSTOM1_F32 = 60,
+        GGML_OP_MAP_CUSTOM2_F32 = 61,
+        GGML_OP_MAP_CUSTOM3_F32 = 62,
+
+        GGML_OP_MAP_CUSTOM1 = 63,
+        GGML_OP_MAP_CUSTOM2 = 64,
+        GGML_OP_MAP_CUSTOM3 = 65,
+
+        GGML_OP_CROSS_ENTROPY_LOSS = 66,
+        GGML_OP_CROSS_ENTROPY_LOSS_BACK = 67,
+
+        GGML_OP_COUNT = 68;
+
+    /** enum ggml_unary_op */
+    public static final int
+        GGML_UNARY_OP_ABS = 0,
+        GGML_UNARY_OP_SGN = 1,
+        GGML_UNARY_OP_NEG = 2,
+        GGML_UNARY_OP_STEP = 3,
+        GGML_UNARY_OP_TANH = 4,
+        GGML_UNARY_OP_ELU = 5,
+        GGML_UNARY_OP_RELU = 6,
+        GGML_UNARY_OP_GELU = 7,
+        GGML_UNARY_OP_GELU_QUICK = 8,
+        GGML_UNARY_OP_SILU = 9;
+
+    /** enum ggml_object_type */
+    public static final int
+        GGML_OBJECT_TENSOR = 0,
+        GGML_OBJECT_GRAPH = 1,
+        GGML_OBJECT_WORK_BUFFER = 2;
 // Targeting ../ggml_object.java
 
 
@@ -408,9 +456,17 @@ public static final int GGML_EXIT_ABORTED = 1;
 // Targeting ../ggml_cplan.java
 
 
+
+    // next prime after GGML_MAX_NODES
+    // #define GGML_GRAPH_HASHTABLE_SIZE 4099
+    // next prime after GGML_MAX_NODES * 2 (nodes + leafs)
+    public static final int GGML_GRAPH_HASHTABLE_SIZE = 8273;
 // Targeting ../ggml_cgraph.java
 
 
+
+    @MemberGetter public static native @Cast("const size_t") long GGML_GRAPH_SIZE();
+    public static final long GGML_GRAPH_SIZE = GGML_GRAPH_SIZE();
 // Targeting ../ggml_scratch.java
 
 
@@ -449,6 +505,7 @@ public static final int GGML_EXIT_ABORTED = 1;
     public static native @Cast("int64_t") long ggml_nelements(@Const ggml_tensor tensor);
     public static native @Cast("int64_t") long ggml_nrows(@Const ggml_tensor tensor);
     public static native @Cast("size_t") long ggml_nbytes(@Const ggml_tensor tensor);
+    public static native @Cast("size_t") long ggml_nbytes_pad(@Const ggml_tensor tensor); // same as ggml_nbytes() but padded to GGML_MEM_ALIGN
     public static native @Cast("size_t") long ggml_nbytes_split(@Const ggml_tensor tensor, int nrows_split);
 
     public static native int ggml_blck_size(@Cast("ggml_type") int type);
@@ -457,6 +514,7 @@ public static final int GGML_EXIT_ABORTED = 1;
 
     public static native @Cast("const char*") BytePointer ggml_type_name(@Cast("ggml_type") int type);
     public static native @Cast("const char*") BytePointer ggml_op_name(@Cast("ggml_op") int op);
+    public static native @Cast("const char*") BytePointer ggml_op_symbol(@Cast("ggml_op") int op);
 
     public static native @Cast("size_t") long ggml_element_size(@Const ggml_tensor tensor);
 
@@ -469,6 +527,8 @@ public static final int GGML_EXIT_ABORTED = 1;
     public static native @Cast("bool") boolean ggml_is_contiguous(@Const ggml_tensor tensor);
     public static native @Cast("bool") boolean ggml_is_permuted(@Const ggml_tensor tensor);
 
+    public static native @Cast("bool") boolean ggml_are_same_shape(@Const ggml_tensor t0, @Const ggml_tensor t1);
+
     // use this to compute the memory overhead of a tensor
     public static native @Cast("size_t") long ggml_tensor_overhead();
 
@@ -480,6 +540,7 @@ public static final int GGML_EXIT_ABORTED = 1;
     public static native @Cast("size_t") long ggml_used_mem(@Const ggml_context ctx);
 
     public static native @Cast("size_t") long ggml_set_scratch(ggml_context ctx, @ByVal ggml_scratch scratch);
+    public static native @Cast("bool") boolean ggml_get_no_alloc(ggml_context ctx);
     public static native void ggml_set_no_alloc(ggml_context ctx, @Cast("bool") boolean no_alloc);
 
     public static native Pointer ggml_get_mem_buffer(@Const ggml_context ctx);
@@ -550,17 +611,24 @@ public static final int GGML_EXIT_ABORTED = 1;
     public static native Pointer ggml_get_data(@Const ggml_tensor tensor);
     public static native FloatPointer ggml_get_data_f32(@Const ggml_tensor tensor);
 
+    public static native @Cast("ggml_unary_op") int ggml_get_unary_op(@Const ggml_tensor tensor);
+
     public static native @Cast("const char*") BytePointer ggml_get_name(@Const ggml_tensor tensor);
-    public static native ggml_tensor ggml_set_name(ggml_tensor tensor, @Cast("const char*") BytePointer name);
-    public static native ggml_tensor ggml_set_name(ggml_tensor tensor, String name);
-    public static native ggml_tensor ggml_format_name(ggml_tensor tensor, @Cast("const char*") BytePointer fmt);
-    public static native ggml_tensor ggml_format_name(ggml_tensor tensor, String fmt);
+    public static native ggml_tensor ggml_set_name(      ggml_tensor tensor, @Cast("const char*") BytePointer name);
+    public static native ggml_tensor ggml_set_name(      ggml_tensor tensor, String name);
+    public static native ggml_tensor ggml_format_name(      ggml_tensor tensor, @Cast("const char*") BytePointer fmt);
+    public static native ggml_tensor ggml_format_name(      ggml_tensor tensor, String fmt);
 
     //
     // operations on tensors with backpropagation
     //
 
     public static native ggml_tensor ggml_dup(
+                ggml_context ctx,
+                ggml_tensor a);
+
+    // in-place, returns view(a)
+    public static native ggml_tensor ggml_dup_inplace(
                 ggml_context ctx,
                 ggml_tensor a);
 
@@ -688,6 +756,13 @@ public static final int GGML_EXIT_ABORTED = 1;
                 ggml_tensor a,
                 ggml_tensor b);
 
+    // concat a and b on dim 2
+    // used in stable-diffusion
+    public static native ggml_tensor ggml_concat(
+                ggml_context ctx,
+                ggml_tensor a,
+                ggml_tensor b);
+
     public static native ggml_tensor ggml_abs(
                 ggml_context ctx,
                 ggml_tensor a);
@@ -777,29 +852,46 @@ public static final int GGML_EXIT_ABORTED = 1;
                 ggml_tensor b);
 
     // normalize along rows
-    // TODO: eps is hardcoded to 1e-5 for now
     public static native ggml_tensor ggml_norm(
                 ggml_context ctx,
-                ggml_tensor a);
+                ggml_tensor a,
+                float eps);
 
     public static native ggml_tensor ggml_norm_inplace(
                 ggml_context ctx,
-                ggml_tensor a);
+                ggml_tensor a,
+                float eps);
 
     public static native ggml_tensor ggml_rms_norm(
                 ggml_context ctx,
-                ggml_tensor a);
+                ggml_tensor a,
+                float eps);
 
     public static native ggml_tensor ggml_rms_norm_inplace(
                 ggml_context ctx,
-                ggml_tensor a);
+                ggml_tensor a,
+                float eps);
+
+    // group normalize along ne0*ne1*n_groups
+    // used in stable-diffusion
+    // TODO: eps is hardcoded to 1e-6 for now
+    public static native ggml_tensor ggml_group_norm(
+                ggml_context ctx,
+                ggml_tensor a,
+                int n_groups);
+
+    public static native ggml_tensor ggml_group_norm_inplace(
+                ggml_context ctx,
+                ggml_tensor a,
+                int n_groups);
 
     // a - x
     // b - dy
     public static native ggml_tensor ggml_rms_norm_back(
                 ggml_context ctx,
                 ggml_tensor a,
-                ggml_tensor b);
+                ggml_tensor b,
+                float eps);
 
     // A: n columns, m rows
     // B: n columns, p rows  (i.e. we transpose it internally)
@@ -887,8 +979,19 @@ public static final int GGML_EXIT_ABORTED = 1;
                 ggml_tensor a,
                 ggml_tensor b);
 
+    // a -> b, in-place, return view(b)
+    public static native ggml_tensor ggml_cpy_inplace(
+                ggml_context ctx,
+                ggml_tensor a,
+                ggml_tensor b);
+
     // make contiguous
     public static native ggml_tensor ggml_cont(
+                ggml_context ctx,
+                ggml_tensor a);
+
+    // make contiguous, in-place
+    public static native ggml_tensor ggml_cont_inplace(
                 ggml_context ctx,
                 ggml_tensor a);
 
@@ -1060,6 +1163,37 @@ public static final int GGML_EXIT_ABORTED = 1;
                 int mode,
                 int n_ctx);
 
+    // custom RoPE
+    public static native ggml_tensor ggml_rope_custom(
+                ggml_context ctx,
+                ggml_tensor a,
+                int n_past,
+                int n_dims,
+                int mode,
+                int n_ctx,
+                float freq_base,
+                float freq_scale);
+
+    // in-place, returns view(a)
+    public static native ggml_tensor ggml_rope_custom_inplace(
+                ggml_context ctx,
+                ggml_tensor a,
+                int n_past,
+                int n_dims,
+                int mode,
+                int n_ctx,
+                float freq_base,
+                float freq_scale);
+
+    // xPos RoPE, in-place, returns view(a)
+    public static native ggml_tensor ggml_rope_xpos_inplace(
+                ggml_context ctx,
+                ggml_tensor a,
+                int n_past,
+                int n_dims,
+                float base,
+                @Cast("bool") boolean down);
+
     // rotary position embedding backward, i.e compute dx from dy
     // a - dy
     public static native ggml_tensor ggml_rope_back(
@@ -1067,7 +1201,12 @@ public static final int GGML_EXIT_ABORTED = 1;
                 ggml_tensor a,
                 int n_past,
                 int n_dims,
-                int mode);
+                int mode,
+                int n_ctx,
+                float freq_base,
+                float freq_scale,
+                float xpos_base,
+                @Cast("bool") boolean xpos_down);
 
     // alibi position embedding
     // in-place, returns view(a)
@@ -1094,6 +1233,15 @@ public static final int GGML_EXIT_ABORTED = 1;
                 int p0,
                 int d0); // dilation
 
+    // conv_1d with padding = half
+    // alias for ggml_conv_1d(a, b, s, a->ne[0]/2, d)
+    public static native ggml_tensor ggml_conv_1d_ph(
+                ggml_context ctx,
+                ggml_tensor a,
+                ggml_tensor b,
+                int s,
+                int d);
+
     public static native ggml_tensor ggml_conv_2d(
                 ggml_context ctx,
                 ggml_tensor a,
@@ -1105,14 +1253,70 @@ public static final int GGML_EXIT_ABORTED = 1;
                 int d0,
                 int d1);
 
-    // conv_1d with padding = half
-    // alias for ggml_conv_1d(a, b, s, a->ne[0]/2, d)
-    public static native ggml_tensor ggml_conv_1d_ph(
+
+    // kernel size is a->ne[0] x a->ne[1]
+    // stride is equal to kernel size
+    // padding is zero
+    // example:
+    // a:     16   16    3  768
+    // b:   1024 1024    3    1
+    // res:   64   64  768    1
+    // used in sam
+    public static native ggml_tensor ggml_conv_2d_sk_p0(
+                ggml_context ctx,
+                ggml_tensor a,
+                ggml_tensor b);
+
+    // kernel size is a->ne[0] x a->ne[1]
+    // stride is 1
+    // padding is half
+    // example:
+    // a:      3    3    256  256
+    // b:     64   64    256    1
+    // res:   64   64    256    1
+    // used in sam
+    public static native ggml_tensor ggml_conv_2d_s1_ph(
+                ggml_context ctx,
+                ggml_tensor a,
+                ggml_tensor b);
+
+    public static native ggml_tensor ggml_conv_transpose_2d_p0(
                 ggml_context ctx,
                 ggml_tensor a,
                 ggml_tensor b,
-                int s,
-                int d);
+                int stride);
+
+    /** enum ggml_op_pool */
+    public static final int
+        GGML_OP_POOL_MAX = 0,
+        GGML_OP_POOL_AVG = 1,
+        GGML_OP_POOL_COUNT = 2;
+
+    public static native ggml_tensor ggml_pool_1d(
+                ggml_context ctx,
+                ggml_tensor a,
+                @Cast("ggml_op_pool") int op,
+                int k0,
+                int s0,
+                int p0); // padding
+
+    public static native ggml_tensor ggml_pool_2d(
+                ggml_context ctx,
+                ggml_tensor a,
+                @Cast("ggml_op_pool") int op,
+                int k0,
+                int k1,
+                int s0,
+                int s1,
+                int p0,
+                int p1);
+
+    // nearest interpolate
+    // used in stable-diffusion
+    public static native ggml_tensor ggml_upscale(
+                ggml_context ctx,
+                ggml_tensor a,
+                int scale_factor);
 
     public static native ggml_tensor ggml_flash_attn(
                 ggml_context ctx,
@@ -1156,6 +1360,37 @@ public static final int GGML_EXIT_ABORTED = 1;
                 int w0,
                 int h0,
                 int w);
+
+    public static native ggml_tensor ggml_unary(
+                ggml_context ctx,
+                 ggml_tensor a,
+                 @Cast("ggml_unary_op") int op);
+
+    public static native ggml_tensor ggml_unary_inplace(
+            ggml_context ctx,
+            ggml_tensor a,
+            @Cast("ggml_unary_op") int op);
+
+    // used in sam
+    public static native ggml_tensor ggml_get_rel_pos(
+                ggml_context ctx,
+                ggml_tensor a,
+                int qh,
+                int kh);
+
+    // used in sam
+
+    public static native ggml_tensor ggml_add_rel_pos(
+                ggml_context ctx,
+                ggml_tensor a,
+                ggml_tensor pw,
+                ggml_tensor ph);
+
+    public static native ggml_tensor ggml_add_rel_pos_inplace(
+                ggml_context ctx,
+                ggml_tensor a,
+                ggml_tensor pw,
+                ggml_tensor ph);
 // Targeting ../ggml_unary_op_f32_t.java
 
 
@@ -1229,6 +1464,65 @@ public static final int GGML_EXIT_ABORTED = 1;
                 ggml_tensor b,
                 ggml_tensor c,
                        ggml_custom3_op_f32_t fun);
+// Targeting ../ggml_custom1_op_t.java
+
+
+// Targeting ../ggml_custom2_op_t.java
+
+
+// Targeting ../ggml_custom3_op_t.java
+
+
+
+    public static final int GGML_N_TASKS_MAX = -1;
+
+    public static native ggml_tensor ggml_map_custom1(
+                ggml_context ctx,
+                ggml_tensor a,
+                ggml_custom1_op_t fun,
+                int n_tasks,
+                Pointer userdata);
+
+    public static native ggml_tensor ggml_map_custom1_inplace(
+                ggml_context ctx,
+                ggml_tensor a,
+                ggml_custom1_op_t fun,
+                int n_tasks,
+                Pointer userdata);
+
+    public static native ggml_tensor ggml_map_custom2(
+                ggml_context ctx,
+                ggml_tensor a,
+                ggml_tensor b,
+                ggml_custom2_op_t fun,
+                int n_tasks,
+                Pointer userdata);
+
+    public static native ggml_tensor ggml_map_custom2_inplace(
+                ggml_context ctx,
+                ggml_tensor a,
+                ggml_tensor b,
+                ggml_custom2_op_t fun,
+                int n_tasks,
+                Pointer userdata);
+
+    public static native ggml_tensor ggml_map_custom3(
+                ggml_context ctx,
+                ggml_tensor a,
+                ggml_tensor b,
+                ggml_tensor c,
+                ggml_custom3_op_t fun,
+                int n_tasks,
+                Pointer userdata);
+
+    public static native ggml_tensor ggml_map_custom3_inplace(
+                ggml_context ctx,
+                ggml_tensor a,
+                ggml_tensor b,
+                ggml_tensor c,
+                ggml_custom3_op_t fun,
+                int n_tasks,
+                Pointer userdata);
 
     // loss function
 
@@ -1251,10 +1545,17 @@ public static final int GGML_EXIT_ABORTED = 1;
                 ggml_context ctx,
                 ggml_tensor tensor);
 
+
     public static native void ggml_build_forward_expand(ggml_cgraph cgraph, ggml_tensor tensor);
+    public static native void ggml_build_backward_expand(ggml_context ctx, ggml_cgraph gf, ggml_cgraph gb, @Cast("bool") boolean keep);
 
     public static native @ByVal ggml_cgraph ggml_build_forward(ggml_tensor tensor);
     public static native @ByVal ggml_cgraph ggml_build_backward(ggml_context ctx, ggml_cgraph gf, @Cast("bool") boolean keep);
+
+    // graph allocation in a context
+    public static native ggml_cgraph ggml_new_graph(ggml_context ctx);
+    public static native ggml_cgraph ggml_build_forward_ctx(ggml_context ctx, ggml_tensor tensor);
+    public static native @Cast("size_t") long ggml_graph_overhead();
 
     // ggml_graph_plan() has to be called before ggml_graph_compute()
     // when plan.work_size > 0, caller must allocate memory for plan.work_data
@@ -1315,6 +1616,9 @@ public static final int GGML_EXIT_ABORTED = 1;
         GGML_LINESEARCH_MAXIMUM_STEP = -126,
         GGML_LINESEARCH_MAXIMUM_ITERATIONS = -125,
         GGML_LINESEARCH_INVALID_PARAMETERS = -124;
+// Targeting ../ggml_opt_callback.java
+
+
 // Targeting ../ggml_opt_params.java
 
 
@@ -1349,7 +1653,9 @@ public static final int GGML_EXIT_ABORTED = 1;
                 ggml_opt_context opt,
                 ggml_tensor f,
                 ggml_cgraph gf,
-                ggml_cgraph gb);
+                ggml_cgraph gb,
+                ggml_opt_callback callback,
+                Pointer callback_data);
 
     //
     // quantization
@@ -1376,6 +1682,149 @@ public static final int GGML_EXIT_ABORTED = 1;
     public static native @Cast("size_t") long ggml_quantize_chunk(@Cast("ggml_type") int type, @Const float[] src, Pointer dst, int start, int n, @Cast("int64_t*") long[] hist);
 
     //
+    // gguf
+    //
+
+    /** enum gguf_type */
+    public static final int
+        GGUF_TYPE_UINT8   = 0,
+        GGUF_TYPE_INT8    = 1,
+        GGUF_TYPE_UINT16  = 2,
+        GGUF_TYPE_INT16   = 3,
+        GGUF_TYPE_UINT32  = 4,
+        GGUF_TYPE_INT32   = 5,
+        GGUF_TYPE_FLOAT32 = 6,
+        GGUF_TYPE_BOOL    = 7,
+        GGUF_TYPE_STRING  = 8,
+        GGUF_TYPE_ARRAY   = 9,
+        GGUF_TYPE_UINT64  = 10,
+        GGUF_TYPE_INT64   = 11,
+        GGUF_TYPE_FLOAT64 = 12,
+        GGUF_TYPE_COUNT = 13;       // marks the end of the enum
+// Targeting ../gguf_context.java
+
+
+// Targeting ../gguf_init_params.java
+
+
+
+    public static native gguf_context gguf_init_empty();
+    public static native gguf_context gguf_init_from_file(@Cast("const char*") BytePointer fname, @ByVal gguf_init_params params);
+    public static native gguf_context gguf_init_from_file(String fname, @ByVal gguf_init_params params);
+    //GGML_API struct gguf_context * gguf_init_from_buffer(..);
+
+    public static native void gguf_free(gguf_context ctx);
+
+    public static native @Cast("const char*") BytePointer gguf_type_name(@Cast("gguf_type") int type);
+
+    public static native int gguf_get_version(gguf_context ctx);
+    public static native @Cast("size_t") long gguf_get_alignment(gguf_context ctx);
+    public static native @Cast("size_t") long gguf_get_data_offset(gguf_context ctx);
+    public static native Pointer gguf_get_data(gguf_context ctx);
+
+    public static native int gguf_get_n_kv(gguf_context ctx);
+    public static native int gguf_find_key(gguf_context ctx, @Cast("const char*") BytePointer key);
+    public static native int gguf_find_key(gguf_context ctx, String key);
+    public static native @Cast("const char*") BytePointer gguf_get_key(gguf_context ctx, int i);
+
+    public static native @Cast("gguf_type") int gguf_get_kv_type(gguf_context ctx, int i);
+    public static native @Cast("gguf_type") int gguf_get_arr_type(gguf_context ctx, int i);
+
+    // results are undefined if the wrong type is used for the key
+    public static native @Cast("uint8_t") byte gguf_get_val_u8(gguf_context ctx, int i);
+    public static native byte gguf_get_val_i8(gguf_context ctx, int i);
+    public static native @Cast("uint16_t") short gguf_get_val_u16(gguf_context ctx, int i);
+    public static native short gguf_get_val_i16(gguf_context ctx, int i);
+    public static native @Cast("uint32_t") int gguf_get_val_u32(gguf_context ctx, int i);
+    public static native int gguf_get_val_i32(gguf_context ctx, int i);
+    public static native float gguf_get_val_f32(gguf_context ctx, int i);
+    public static native @Cast("uint64_t") long gguf_get_val_u64(gguf_context ctx, int i);
+    public static native @Cast("int64_t") long gguf_get_val_i64(gguf_context ctx, int i);
+    public static native double gguf_get_val_f64(gguf_context ctx, int i);
+    public static native @Cast("bool") boolean gguf_get_val_bool(gguf_context ctx, int i);
+    public static native @Cast("const char*") BytePointer gguf_get_val_str(gguf_context ctx, int i);
+    public static native int gguf_get_arr_n(gguf_context ctx, int i);
+    public static native @Const Pointer gguf_get_arr_data(gguf_context ctx, int i);
+    public static native @Cast("const char*") BytePointer gguf_get_arr_str(gguf_context ctx, int key_id, int i);
+
+    public static native int gguf_get_n_tensors(gguf_context ctx);
+    public static native int gguf_find_tensor(gguf_context ctx, @Cast("const char*") BytePointer name);
+    public static native int gguf_find_tensor(gguf_context ctx, String name);
+    public static native @Cast("size_t") long gguf_get_tensor_offset(gguf_context ctx, int i);
+    public static native @Cast("char*") BytePointer gguf_get_tensor_name(gguf_context ctx, int i);
+
+    // overrides existing values or adds a new one
+    public static native void gguf_set_val_u8(gguf_context ctx, @Cast("const char*") BytePointer key, @Cast("uint8_t") byte val);
+    public static native void gguf_set_val_u8(gguf_context ctx, String key, @Cast("uint8_t") byte val);
+    public static native void gguf_set_val_i8(gguf_context ctx, @Cast("const char*") BytePointer key, byte val);
+    public static native void gguf_set_val_i8(gguf_context ctx, String key, byte val);
+    public static native void gguf_set_val_u16(gguf_context ctx, @Cast("const char*") BytePointer key, @Cast("uint16_t") short val);
+    public static native void gguf_set_val_u16(gguf_context ctx, String key, @Cast("uint16_t") short val);
+    public static native void gguf_set_val_i16(gguf_context ctx, @Cast("const char*") BytePointer key, short val);
+    public static native void gguf_set_val_i16(gguf_context ctx, String key, short val);
+    public static native void gguf_set_val_u32(gguf_context ctx, @Cast("const char*") BytePointer key, @Cast("uint32_t") int val);
+    public static native void gguf_set_val_u32(gguf_context ctx, String key, @Cast("uint32_t") int val);
+    public static native void gguf_set_val_i32(gguf_context ctx, @Cast("const char*") BytePointer key, int val);
+    public static native void gguf_set_val_i32(gguf_context ctx, String key, int val);
+    public static native void gguf_set_val_f32(gguf_context ctx, @Cast("const char*") BytePointer key, float val);
+    public static native void gguf_set_val_f32(gguf_context ctx, String key, float val);
+    public static native void gguf_set_val_u64(gguf_context ctx, @Cast("const char*") BytePointer key, @Cast("uint64_t") long val);
+    public static native void gguf_set_val_u64(gguf_context ctx, String key, @Cast("uint64_t") long val);
+    public static native void gguf_set_val_i64(gguf_context ctx, @Cast("const char*") BytePointer key, @Cast("int64_t") long val);
+    public static native void gguf_set_val_i64(gguf_context ctx, String key, @Cast("int64_t") long val);
+    public static native void gguf_set_val_f64(gguf_context ctx, @Cast("const char*") BytePointer key, double val);
+    public static native void gguf_set_val_f64(gguf_context ctx, String key, double val);
+    public static native void gguf_set_val_bool(gguf_context ctx, @Cast("const char*") BytePointer key, @Cast("bool") boolean val);
+    public static native void gguf_set_val_bool(gguf_context ctx, String key, @Cast("bool") boolean val);
+    public static native void gguf_set_val_str(gguf_context ctx, @Cast("const char*") BytePointer key, @Cast("const char*") BytePointer val);
+    public static native void gguf_set_val_str(gguf_context ctx, String key, String val);
+    public static native void gguf_set_arr_data(gguf_context ctx, @Cast("const char*") BytePointer key, @Cast("gguf_type") int type, @Const Pointer data, int n);
+    public static native void gguf_set_arr_data(gguf_context ctx, String key, @Cast("gguf_type") int type, @Const Pointer data, int n);
+    public static native void gguf_set_arr_str(gguf_context ctx, @Cast("const char*") BytePointer key, @Cast("const char**") PointerPointer data, int n);
+    public static native void gguf_set_arr_str(gguf_context ctx, @Cast("const char*") BytePointer key, @Cast("const char**") @ByPtrPtr BytePointer data, int n);
+    public static native void gguf_set_arr_str(gguf_context ctx, String key, @Cast("const char**") @ByPtrPtr ByteBuffer data, int n);
+    public static native void gguf_set_arr_str(gguf_context ctx, @Cast("const char*") BytePointer key, @Cast("const char**") @ByPtrPtr byte[] data, int n);
+    public static native void gguf_set_arr_str(gguf_context ctx, String key, @Cast("const char**") @ByPtrPtr BytePointer data, int n);
+    public static native void gguf_set_arr_str(gguf_context ctx, @Cast("const char*") BytePointer key, @Cast("const char**") @ByPtrPtr ByteBuffer data, int n);
+    public static native void gguf_set_arr_str(gguf_context ctx, String key, @Cast("const char**") @ByPtrPtr byte[] data, int n);
+
+    // set or add KV pairs from another context
+    public static native void gguf_set_kv(gguf_context ctx, gguf_context src);
+
+    // manage tensor info
+    public static native void gguf_add_tensor(gguf_context ctx, @Const ggml_tensor tensor);
+    public static native void gguf_set_tensor_type(gguf_context ctx, @Cast("const char*") BytePointer name, @Cast("ggml_type") int type);
+    public static native void gguf_set_tensor_type(gguf_context ctx, String name, @Cast("ggml_type") int type);
+    public static native void gguf_set_tensor_data(gguf_context ctx, @Cast("const char*") BytePointer name, @Const Pointer data, @Cast("size_t") long size);
+    public static native void gguf_set_tensor_data(gguf_context ctx, String name, @Const Pointer data, @Cast("size_t") long size);
+
+    // writing gguf files can be done in 2 ways:
+    //
+    // - write the entire gguf_context to a binary file in a single pass:
+    //
+    //   gguf_write_to_file(ctx, fname);
+    //
+    // - first prepare a file with a placeholder for the meta data, write the tensor data, then write the meta data:
+    //
+    //   FILE * f = fopen(fname, "wb");
+    //   fseek(f, gguf_get_meta_size(ctx), SEEK_SET);
+    //   fwrite(f, ...);
+    //   void * data = gguf_meta_get_meta_data(ctx);
+    //   fseek(f, 0, SEEK_SET);
+    //   fwrite(f, data, gguf_get_meta_size(ctx));
+    //   free(data);
+    //   fclose(f);
+    //
+
+    // write the entire context to a binary file
+    public static native void gguf_write_to_file(gguf_context ctx, @Cast("const char*") BytePointer fname, @Cast("bool") boolean only_meta);
+    public static native void gguf_write_to_file(gguf_context ctx, String fname, @Cast("bool") boolean only_meta);
+
+    // get the size in bytes of the meta data (header, kv pairs, tensor info) including padding
+    public static native @Cast("size_t") long gguf_get_meta_size(gguf_context ctx);
+    public static native void gguf_get_meta_data(gguf_context ctx, Pointer data);
+
+    //
     // system info
     //
 
@@ -1395,6 +1844,7 @@ public static final int GGML_EXIT_ABORTED = 1;
     public static native int ggml_cpu_has_clblast();
     public static native int ggml_cpu_has_gpublas();
     public static native int ggml_cpu_has_sse3();
+    public static native int ggml_cpu_has_ssse3();
     public static native int ggml_cpu_has_vsx();
 
     //
@@ -1419,7 +1869,7 @@ public static final int GGML_EXIT_ABORTED = 1;
 
 
 
-    public static native @ByVal ggml_type_traits_t ggml_internal_get_type_traits(@Cast("ggml_type") int i);
+    public static native @ByVal ggml_type_traits_t ggml_internal_get_type_traits(@Cast("ggml_type") int type);
 
 // #ifdef  __cplusplus
 // #endif
@@ -1440,6 +1890,13 @@ public static final int GGML_EXIT_ABORTED = 1;
 // #else
 public static final int QK_K = 256;
 public static final int K_SCALE_SIZE = 12;
+// #endif
+
+// #ifndef static_assert
+// #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201100L)
+// #define static_assert(cond, msg) _Static_assert(cond, msg)
+// #else
+// #define static_assert(cond, msg) struct global_scope_noop_trick
 // Targeting ../block_q2_K.java
 
 
@@ -1553,6 +2010,23 @@ public static native @Cast("size_t") long ggml_quantize_q6_K(@Const FloatPointer
 public static native @Cast("size_t") long ggml_quantize_q6_K(@Const FloatBuffer src, Pointer dst, int n, int k, @Cast("int64_t*") LongBuffer hist);
 public static native @Cast("size_t") long ggml_quantize_q6_K(@Const float[] src, Pointer dst, int n, int k, @Cast("int64_t*") long[] hist);
 
+
+
+// Parsed from ggml-alloc.h
+
+// #pragma once
+
+// #include "ggml.h"
+
+// #ifdef  __cplusplus
+// #endif
+
+// tell the allocator to parse nodes following the order described in the list
+// you should call this if your graph are optimized to execute out-of-order
+
+
+// #ifdef  __cplusplus
+// #endif
 
 
 }

@@ -35,13 +35,11 @@ public class ggml_opt_context extends Pointer {
 
         public native @Cast("bool") boolean just_initialized(); public native ggml_opt_context just_initialized(boolean setter);
 
-            @Name("adam.x") public native ggml_tensor adam_x(); public native ggml_opt_context adam_x(ggml_tensor setter);  // view of the parameters
-            @Name("adam.g1") public native ggml_tensor adam_g1(); public native ggml_opt_context adam_g1(ggml_tensor setter); // gradient
-            @Name("adam.g2") public native ggml_tensor adam_g2(); public native ggml_opt_context adam_g2(ggml_tensor setter); // gradient squared
+        public native float loss_before(); public native ggml_opt_context loss_before(float setter);
+        public native float loss_after(); public native ggml_opt_context loss_after(float setter);
+
             @Name("adam.m") public native ggml_tensor adam_m(); public native ggml_opt_context adam_m(ggml_tensor setter);  // first moment
             @Name("adam.v") public native ggml_tensor adam_v(); public native ggml_opt_context adam_v(ggml_tensor setter);  // second moment
-            @Name("adam.mh") public native ggml_tensor adam_mh(); public native ggml_opt_context adam_mh(ggml_tensor setter); // first moment hat
-            @Name("adam.vh") public native ggml_tensor adam_vh(); public native ggml_opt_context adam_vh(ggml_tensor setter); // second moment hat
             @Name("adam.pf") public native ggml_tensor adam_pf(); public native ggml_opt_context adam_pf(ggml_tensor setter); // past function values
             @Name("adam.fx_best") public native float adam_fx_best(); public native ggml_opt_context adam_fx_best(float setter);
             @Name("adam.fx_prev") public native float adam_fx_prev(); public native ggml_opt_context adam_fx_prev(float setter);

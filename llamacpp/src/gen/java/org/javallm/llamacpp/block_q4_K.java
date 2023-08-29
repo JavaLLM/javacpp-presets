@@ -6,7 +6,7 @@ import java.nio.*;
 import org.bytedeco.javacpp.*;
 import org.bytedeco.javacpp.annotation.*;
 
-import static org.javallm.llamacpp.global.ggml.*;
+import static org.javallm.llamacpp.global.llama.*;
 
 // #endif
 
@@ -16,7 +16,7 @@ import static org.javallm.llamacpp.global.ggml.*;
 // Effectively 4.5 bits per weight
 // #ifdef GGML_QKK_64
 // #else
-@Properties(inherit = org.javallm.llamacpp.presets.ggml.class)
+@Properties(inherit = org.javallm.llamacpp.presets.llama.class)
 public class block_q4_K extends Pointer {
     static { Loader.load(); }
     /** Default native constructor. */

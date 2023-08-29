@@ -43,6 +43,10 @@ public class ggml_tensor extends Pointer {
         // compute data
         public native @Cast("ggml_op") int op(); public native ggml_tensor op(int setter);
 
+        // op params - allocated as int32_t for alignment
+        public native int op_params(int i); public native ggml_tensor op_params(int i, int setter);
+        @MemberGetter public native IntPointer op_params();
+
         public native @Cast("bool") boolean is_param(); public native ggml_tensor is_param(boolean setter);
 
         public native ggml_tensor grad(); public native ggml_tensor grad(ggml_tensor setter);

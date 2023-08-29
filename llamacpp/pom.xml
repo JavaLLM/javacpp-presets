@@ -10,12 +10,12 @@
     </parent>
 
     <artifactId>llamacpp</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.3</version>
     <name>JavaCPP Presets for LLaMA.cpp</name>
 
     <properties>
         <javacpp.moduleId>llamacpp</javacpp.moduleId>
-        <javacpp.moduleVersion>master-4e7464e</javacpp.moduleVersion>
+        <javacpp.moduleVersion>b1112</javacpp.moduleVersion>
     </properties>
 
     <dependencies>
