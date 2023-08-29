@@ -887,11 +887,11 @@ public static final int GGUF_DEFAULT_ALIGNMENT = 32;
 
     // a - x
     // b - dy
-    // TODO: update with configurable eps
     public static native ggml_tensor ggml_rms_norm_back(
                 ggml_context ctx,
                 ggml_tensor a,
-                ggml_tensor b);
+                ggml_tensor b,
+                float eps);
 
     // A: n columns, m rows
     // B: n columns, p rows  (i.e. we transpose it internally)
@@ -1547,6 +1547,7 @@ public static final int GGUF_DEFAULT_ALIGNMENT = 32;
 
 
     public static native void ggml_build_forward_expand(ggml_cgraph cgraph, ggml_tensor tensor);
+    public static native void ggml_build_backward_expand(ggml_context ctx, ggml_cgraph gf, ggml_cgraph gb, @Cast("bool") boolean keep);
 
     public static native @ByVal ggml_cgraph ggml_build_forward(ggml_tensor tensor);
     public static native @ByVal ggml_cgraph ggml_build_backward(ggml_context ctx, ggml_cgraph gf, @Cast("bool") boolean keep);
@@ -1615,6 +1616,9 @@ public static final int GGUF_DEFAULT_ALIGNMENT = 32;
         GGML_LINESEARCH_MAXIMUM_STEP = -126,
         GGML_LINESEARCH_MAXIMUM_ITERATIONS = -125,
         GGML_LINESEARCH_INVALID_PARAMETERS = -124;
+// Targeting ../ggml_opt_callback.java
+
+
 // Targeting ../ggml_opt_params.java
 
 
@@ -1649,7 +1653,9 @@ public static final int GGUF_DEFAULT_ALIGNMENT = 32;
                 ggml_opt_context opt,
                 ggml_tensor f,
                 ggml_cgraph gf,
-                ggml_cgraph gb);
+                ggml_cgraph gb,
+                ggml_opt_callback callback,
+                Pointer callback_data);
 
     //
     // quantization
@@ -2033,6 +2039,7 @@ public static final int LLAMA_MAX_DEVICES = 1;
 // #endif // GGML_USE_CUBLAS
 // #include <stddef.h>
 // #include <stdint.h>
+// #include <stdio.h>
 // #include <stdbool.h>
 
 // #ifdef LLAMA_SHARED
@@ -2592,6 +2599,8 @@ public static final int LLAMA_SESSION_VERSION = 1;
     // Set callback for all future logging events.
     // If this is not called, or NULL is supplied, everything is output on stderr.
     public static native void llama_log_set(llama_log_callback log_callback, Pointer user_data);
+
+    public static native void llama_dump_timing_info_yaml(@Cast("FILE*") Pointer stream, @Const llama_context ctx);
 
 // #ifdef __cplusplus
 // #endif

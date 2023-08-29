@@ -60,12 +60,14 @@ public class ggml_opt_params extends Pointer {
 
             @Name("adam.sched") public native float adam_sched(); public native ggml_opt_params adam_sched(float setter); // schedule multiplier (fixed, decay or warmup)
             @Name("adam.decay") public native float adam_decay(); public native ggml_opt_params adam_decay(float setter); // weight decay for AdamW, use 0.0f to disable
+            @Name("adam.decay_min_ndim") public native int adam_decay_min_ndim(); public native ggml_opt_params adam_decay_min_ndim(int setter); // minimum number of tensor dimension to apply weight decay
             @Name("adam.alpha") public native float adam_alpha(); public native ggml_opt_params adam_alpha(float setter); // learning rate
             @Name("adam.beta1") public native float adam_beta1(); public native ggml_opt_params adam_beta1(float setter);
             @Name("adam.beta2") public native float adam_beta2(); public native ggml_opt_params adam_beta2(float setter);
             @Name("adam.eps") public native float adam_eps(); public native ggml_opt_params adam_eps(float setter);   // epsilon for numerical stability
             @Name("adam.eps_f") public native float adam_eps_f(); public native ggml_opt_params adam_eps_f(float setter); // epsilon for convergence test
             @Name("adam.eps_g") public native float adam_eps_g(); public native ggml_opt_params adam_eps_g(float setter); // epsilon for convergence test
+            @Name("adam.gclip") public native float adam_gclip(); public native ggml_opt_params adam_gclip(float setter); // gradient clipping
 
         // LBFGS parameters
             @Name("lbfgs.m") public native int lbfgs_m(); public native ggml_opt_params lbfgs_m(int setter); // number of corrections to approximate the inv. Hessian
