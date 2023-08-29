@@ -6,11 +6,11 @@ import java.nio.*;
 import org.bytedeco.javacpp.*;
 import org.bytedeco.javacpp.annotation.*;
 
-import static org.javallm.llamacpp.global.ggml.*;
+import static org.javallm.llamacpp.global.llama.*;
 
 
 // This is only used for intermediate quantization and dot products
-@Properties(inherit = org.javallm.llamacpp.presets.ggml.class)
+@Properties(inherit = org.javallm.llamacpp.presets.llama.class)
 public class block_q8_K extends Pointer {
     static { Loader.load(); }
     /** Default native constructor. */

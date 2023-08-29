@@ -6,7 +6,7 @@ import java.nio.*;
 import org.bytedeco.javacpp.*;
 import org.bytedeco.javacpp.annotation.*;
 
-import static org.javallm.llamacpp.global.ggml.*;
+import static org.javallm.llamacpp.global.llama.*;
 
 // #endif
 
@@ -14,7 +14,7 @@ import static org.javallm.llamacpp.global.ggml.*;
 // weight is represented as x = a * q
 // 16 blocks of 16 elemenets each
 // Effectively 6.5625 bits per weight
-@Properties(inherit = org.javallm.llamacpp.presets.ggml.class)
+@Properties(inherit = org.javallm.llamacpp.presets.llama.class)
 public class block_q6_K extends Pointer {
     static { Loader.load(); }
     /** Default native constructor. */

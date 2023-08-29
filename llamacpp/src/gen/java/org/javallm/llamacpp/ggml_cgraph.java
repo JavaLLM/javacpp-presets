@@ -38,6 +38,9 @@ public class ggml_cgraph extends Pointer {
         public native ggml_tensor leafs(int i); public native ggml_cgraph leafs(int i, ggml_tensor setter);
         @MemberGetter public native @Cast("ggml_tensor**") PointerPointer leafs();
 
+        public native Pointer visited_hash_table(int i); public native ggml_cgraph visited_hash_table(int i, Pointer setter);
+        @MemberGetter public native @Cast("void**") PointerPointer visited_hash_table();
+
         // performance
         public native int perf_runs(); public native ggml_cgraph perf_runs(int setter);
         public native @Cast("int64_t") long perf_cycles(); public native ggml_cgraph perf_cycles(long setter);

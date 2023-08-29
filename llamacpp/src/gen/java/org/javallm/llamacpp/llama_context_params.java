@@ -9,31 +9,36 @@ import org.bytedeco.javacpp.annotation.*;
 import static org.javallm.llamacpp.global.llama.*;
 
 
-   @Properties(inherit = org.javallm.llamacpp.presets.llama.class)
+    @Properties(inherit = org.javallm.llamacpp.presets.llama.class)
 public class llama_context_params extends Pointer {
-       static { Loader.load(); }
-       /** Default native constructor. */
-       public llama_context_params() { super((Pointer)null); allocate(); }
-       /** Native array allocator. Access with {@link Pointer#position(long)}. */
-       public llama_context_params(long size) { super((Pointer)null); allocateArray(size); }
-       /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */
-       public llama_context_params(Pointer p) { super(p); }
-       private native void allocate();
-       private native void allocateArray(long size);
-       @Override public llama_context_params position(long position) {
-           return (llama_context_params)super.position(position);
-       }
-       @Override public llama_context_params getPointer(long i) {
-           return new llama_context_params((Pointer)this).offsetAddress(i);
-       }
-   
-        public native @Cast("uint32_t") int seed(); public native llama_context_params seed(int setter);                         // RNG seed, -1 for random
-        public native int n_ctx(); public native llama_context_params n_ctx(int setter);                        // text context
-        public native int n_batch(); public native llama_context_params n_batch(int setter);                      // prompt processing batch size
-        public native int n_gpu_layers(); public native llama_context_params n_gpu_layers(int setter);                 // number of layers to store in VRAM
-        public native int main_gpu(); public native llama_context_params main_gpu(int setter);                     // the GPU that is used for scratch and small tensors
-        public native float tensor_split(int i); public native llama_context_params tensor_split(int i, float setter);
-        @MemberGetter public native FloatPointer tensor_split(); // how to split layers across multiple GPUs
+        static { Loader.load(); }
+        /** Default native constructor. */
+        public llama_context_params() { super((Pointer)null); allocate(); }
+        /** Native array allocator. Access with {@link Pointer#position(long)}. */
+        public llama_context_params(long size) { super((Pointer)null); allocateArray(size); }
+        /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */
+        public llama_context_params(Pointer p) { super(p); }
+        private native void allocate();
+        private native void allocateArray(long size);
+        @Override public llama_context_params position(long position) {
+            return (llama_context_params)super.position(position);
+        }
+        @Override public llama_context_params getPointer(long i) {
+            return new llama_context_params((Pointer)this).offsetAddress(i);
+        }
+    
+        public native @Cast("uint32_t") int seed(); public native llama_context_params seed(int setter);         // RNG seed, -1 for random
+        public native int n_ctx(); public native llama_context_params n_ctx(int setter);        // text context
+        public native int n_batch(); public native llama_context_params n_batch(int setter);      // prompt processing batch size
+        public native int n_gpu_layers(); public native llama_context_params n_gpu_layers(int setter); // number of layers to store in VRAM
+        public native int main_gpu(); public native llama_context_params main_gpu(int setter);     // the GPU that is used for scratch and small tensors
+
+        public native @Const FloatPointer tensor_split(); public native llama_context_params tensor_split(FloatPointer setter); // how to split layers across multiple GPUs (size: LLAMA_MAX_DEVICES)
+
+        // ref: https://github.com/ggerganov/llama.cpp/pull/2054
+        public native float rope_freq_base(); public native llama_context_params rope_freq_base(float setter);  // RoPE base frequency
+        public native float rope_freq_scale(); public native llama_context_params rope_freq_scale(float setter); // RoPE frequency scaling factor
+
         // called with a progress value between 0 and 1, pass NULL to disable
         public native llama_progress_callback progress_callback(); public native llama_context_params progress_callback(llama_progress_callback setter);
         // context pointer passed to the progress callback
@@ -41,6 +46,7 @@ public class llama_context_params extends Pointer {
 
         // Keep the booleans together to avoid misalignment during copy-by-value.
         public native @Cast("bool") boolean low_vram(); public native llama_context_params low_vram(boolean setter);   // if true, reduce VRAM usage at the cost of performance
+        public native @Cast("bool") boolean mul_mat_q(); public native llama_context_params mul_mat_q(boolean setter);  // if true, use experimental mul_mat_q kernels
         public native @Cast("bool") boolean f16_kv(); public native llama_context_params f16_kv(boolean setter);     // use fp16 for KV cache
         public native @Cast("bool") boolean logits_all(); public native llama_context_params logits_all(boolean setter); // the llama_eval() call computes all logits, not just the last one
         public native @Cast("bool") boolean vocab_only(); public native llama_context_params vocab_only(boolean setter); // only load the vocabulary, no weights

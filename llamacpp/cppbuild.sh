@@ -26,23 +26,20 @@ else
   unzip llama.cpp-$VERSION.zip
 fi
 
+#cp -r ~/Downloads/llama.cpp-master-8207214 .
 cd llama.cpp-$VERSION
 
 # build library
 echo "Building LLaMA.cpp library..."
 
-make -j8 ggml.o llama.o k_quants.o
-ar src libggml.a ggml.o
-ar src libllama.a ggml.o k_quants.o llama.o
+make -j8 ggml.o llama.o ggml-alloc.o k_quants.o
+ar src libggml.a ggml.o k_quants.o ggml-alloc.o
+ar src libllama.a ggml.o k_quants.o ggml-alloc.o llama.o
 
 # copy lib and header files
 cp libggml.a libllama.a ../lib
-cp ggml.h llama.h ../include
+cp ggml.h llama.h ggml-alloc.h ../include
 
 # k_quants.h cannot be properly handled, disable this feature temporally
 sed 's/ restrict / /g' k_quants.h > k_quants-modified.h
 cp k_quants-modified.h ../include/k_quants.h
-
-# JavaCPP could not handle `constexpr` keyword, replace it with `const`
-sed 's/ constexpr / const /g' llama-util.h > llama-util-modified.h
-cp llama-util-modified.h ../include/llama-util.h

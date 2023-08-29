@@ -145,13 +145,16 @@ public class llama extends org.javallm.llamacpp.presets.llama {
 // The data of the tensor is accessed via the "data" pointer. For example:
 //
 //   {
-//       struct ggml_tensor * a = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, 2, 3);
+//       const int nx = 2;
+//       const int ny = 3;
 //
-//       // a[2, 1] = 1.0f;
-//       *(float *) ((char *) a->data + 2*a->nb[1] + 1*a->nb[0]) = 1.0f;
+//       struct ggml_tensor * a = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, nx, ny);
 //
-//       // a[0, 2] = 2.0f;
-//       *(float *) ((char *) a->data + 0*a->nb[1] + 2*a->nb[0]) = 2.0f;
+//       for (int y = 0; y < ny; y++) {
+//           for (int x = 0; x < nx; x++) {
+//               *(float *) ((char *) a->data + y*a->nb[1] + x*a->nb[0]) = x + y;
+//           }
+//       }
 //
 //       ...
 //   }
@@ -189,6 +192,15 @@ public class llama extends org.javallm.llamacpp.presets.llama {
 // #    define GGML_API
 // #endif
 
+// TODO: support for clang
+// #ifdef __GNUC__
+// #    define GGML_DEPRECATED(func, hint) func __attribute__((deprecated(hint)))
+// #elif defined(_MSC_VER)
+// #    define GGML_DEPRECATED(func, hint) __declspec(deprecated(hint)) func
+// #else
+// #    define GGML_DEPRECATED(func, hint) func
+// #endif
+
 // #include <stdint.h>
 // #include <stddef.h>
 // #include <stdbool.h>
@@ -204,15 +216,26 @@ public static final int GGML_MAX_NODES =         4096;
 public static final int GGML_MAX_PARAMS =        256;
 public static final int GGML_MAX_CONTEXTS =      64;
 public static final int GGML_MAX_SRC =           6;
-public static final int GGML_MAX_NAME =          48;
+public static final int GGML_MAX_NAME =          64;
+public static final int GGML_MAX_OP_PARAMS =     32;
 public static final int GGML_DEFAULT_N_THREADS = 4;
 
+// #if UINTPTR_MAX == 0xFFFFFFFF
+    public static final int GGML_MEM_ALIGN = 4;
+// #else
+// #endif
 
 public static final int GGML_EXIT_SUCCESS = 0;
 public static final int GGML_EXIT_ABORTED = 1;
 
+public static final int GGUF_MAGIC =   0x46554747; // "GGUF"
+public static final int GGUF_VERSION = 2;
+
+public static final int GGUF_DEFAULT_ALIGNMENT = 32;
+
 // #define GGML_UNUSED(x) (void)(x)
 
+// #define GGML_PAD(x, n) (((x) + (n) - 1) & ~((n) - 1))
 
 // #define GGML_ASSERT(x)
 //     do {
@@ -249,7 +272,8 @@ public static final int GGML_EXIT_ABORTED = 1;
 // #ifdef  __cplusplus
 // #endif
 
-// #ifdef __ARM_NEON
+// #if defined(__ARM_NEON) && defined(__CUDACC__)
+// #elif defined(__ARM_NEON)
 // #else
 // #endif
 
@@ -336,63 +360,87 @@ public static final int GGML_EXIT_ABORTED = 1;
         GGML_OP_ARGMAX = 14,
         GGML_OP_REPEAT = 15,
         GGML_OP_REPEAT_BACK = 16,
-        GGML_OP_ABS = 17,
-        GGML_OP_SGN = 18,
-        GGML_OP_NEG = 19,
-        GGML_OP_STEP = 20,
-        GGML_OP_TANH = 21,
-        GGML_OP_ELU = 22,
-        GGML_OP_RELU = 23,
-        GGML_OP_GELU = 24,
-        GGML_OP_GELU_QUICK = 25,
-        GGML_OP_SILU = 26,
-        GGML_OP_SILU_BACK = 27,
-        GGML_OP_NORM = 28, // normalize
-        GGML_OP_RMS_NORM = 29,
-        GGML_OP_RMS_NORM_BACK = 30,
+        GGML_OP_CONCAT = 17,
+        GGML_OP_SILU_BACK = 18,
+        GGML_OP_NORM = 19, // normalize
+        GGML_OP_RMS_NORM = 20,
+        GGML_OP_RMS_NORM_BACK = 21,
+        GGML_OP_GROUP_NORM = 22,
 
-        GGML_OP_MUL_MAT = 31,
-        GGML_OP_OUT_PROD = 32,
+        GGML_OP_MUL_MAT = 23,
+        GGML_OP_OUT_PROD = 24,
 
-        GGML_OP_SCALE = 33,
-        GGML_OP_SET = 34,
-        GGML_OP_CPY = 35,
-        GGML_OP_CONT = 36,
-        GGML_OP_RESHAPE = 37,
-        GGML_OP_VIEW = 38,
-        GGML_OP_PERMUTE = 39,
-        GGML_OP_TRANSPOSE = 40,
-        GGML_OP_GET_ROWS = 41,
-        GGML_OP_GET_ROWS_BACK = 42,
-        GGML_OP_DIAG = 43,
-        GGML_OP_DIAG_MASK_INF = 44,
-        GGML_OP_DIAG_MASK_ZERO = 45,
-        GGML_OP_SOFT_MAX = 46,
-        GGML_OP_SOFT_MAX_BACK = 47,
-        GGML_OP_ROPE = 48,
-        GGML_OP_ROPE_BACK = 49,
-        GGML_OP_ALIBI = 50,
-        GGML_OP_CLAMP = 51,
-        GGML_OP_CONV_1D = 52,
-        GGML_OP_CONV_2D = 53,
+        GGML_OP_SCALE = 25,
+        GGML_OP_SET = 26,
+        GGML_OP_CPY = 27,
+        GGML_OP_CONT = 28,
+        GGML_OP_RESHAPE = 29,
+        GGML_OP_VIEW = 30,
+        GGML_OP_PERMUTE = 31,
+        GGML_OP_TRANSPOSE = 32,
+        GGML_OP_GET_ROWS = 33,
+        GGML_OP_GET_ROWS_BACK = 34,
+        GGML_OP_DIAG = 35,
+        GGML_OP_DIAG_MASK_INF = 36,
+        GGML_OP_DIAG_MASK_ZERO = 37,
+        GGML_OP_SOFT_MAX = 38,
+        GGML_OP_SOFT_MAX_BACK = 39,
+        GGML_OP_ROPE = 40,
+        GGML_OP_ROPE_BACK = 41,
+        GGML_OP_ALIBI = 42,
+        GGML_OP_CLAMP = 43,
+        GGML_OP_CONV_1D = 44,
+        GGML_OP_CONV_2D = 45,
+        GGML_OP_CONV_TRANSPOSE_2D = 46,
+        GGML_OP_POOL_1D = 47,
+        GGML_OP_POOL_2D = 48,
 
-        GGML_OP_FLASH_ATTN = 54,
-        GGML_OP_FLASH_FF = 55,
-        GGML_OP_FLASH_ATTN_BACK = 56,
-        GGML_OP_WIN_PART = 57,
-        GGML_OP_WIN_UNPART = 58,
+        GGML_OP_UPSCALE = 49, // nearest interpolate
 
-        GGML_OP_MAP_UNARY = 59,
-        GGML_OP_MAP_BINARY = 60,
+        GGML_OP_FLASH_ATTN = 50,
+        GGML_OP_FLASH_FF = 51,
+        GGML_OP_FLASH_ATTN_BACK = 52,
+        GGML_OP_WIN_PART = 53,
+        GGML_OP_WIN_UNPART = 54,
+        GGML_OP_GET_REL_POS = 55,
+        GGML_OP_ADD_REL_POS = 56,
 
-        GGML_OP_MAP_CUSTOM1 = 61,
-        GGML_OP_MAP_CUSTOM2 = 62,
-        GGML_OP_MAP_CUSTOM3 = 63,
+        GGML_OP_UNARY = 57,
 
-        GGML_OP_CROSS_ENTROPY_LOSS = 64,
-        GGML_OP_CROSS_ENTROPY_LOSS_BACK = 65,
+        GGML_OP_MAP_UNARY = 58,
+        GGML_OP_MAP_BINARY = 59,
 
-        GGML_OP_COUNT = 66;
+        GGML_OP_MAP_CUSTOM1_F32 = 60,
+        GGML_OP_MAP_CUSTOM2_F32 = 61,
+        GGML_OP_MAP_CUSTOM3_F32 = 62,
+
+        GGML_OP_MAP_CUSTOM1 = 63,
+        GGML_OP_MAP_CUSTOM2 = 64,
+        GGML_OP_MAP_CUSTOM3 = 65,
+
+        GGML_OP_CROSS_ENTROPY_LOSS = 66,
+        GGML_OP_CROSS_ENTROPY_LOSS_BACK = 67,
+
+        GGML_OP_COUNT = 68;
+
+    /** enum ggml_unary_op */
+    public static final int
+        GGML_UNARY_OP_ABS = 0,
+        GGML_UNARY_OP_SGN = 1,
+        GGML_UNARY_OP_NEG = 2,
+        GGML_UNARY_OP_STEP = 3,
+        GGML_UNARY_OP_TANH = 4,
+        GGML_UNARY_OP_ELU = 5,
+        GGML_UNARY_OP_RELU = 6,
+        GGML_UNARY_OP_GELU = 7,
+        GGML_UNARY_OP_GELU_QUICK = 8,
+        GGML_UNARY_OP_SILU = 9;
+
+    /** enum ggml_object_type */
+    public static final int
+        GGML_OBJECT_TENSOR = 0,
+        GGML_OBJECT_GRAPH = 1,
+        GGML_OBJECT_WORK_BUFFER = 2;
 // Targeting ../ggml_object.java
 
 
@@ -408,9 +456,17 @@ public static final int GGML_EXIT_ABORTED = 1;
 // Targeting ../ggml_cplan.java
 
 
+
+    // next prime after GGML_MAX_NODES
+    // #define GGML_GRAPH_HASHTABLE_SIZE 4099
+    // next prime after GGML_MAX_NODES * 2 (nodes + leafs)
+    public static final int GGML_GRAPH_HASHTABLE_SIZE = 8273;
 // Targeting ../ggml_cgraph.java
 
 
+
+    @MemberGetter public static native @Cast("const size_t") long GGML_GRAPH_SIZE();
+    public static final long GGML_GRAPH_SIZE = GGML_GRAPH_SIZE();
 // Targeting ../ggml_scratch.java
 
 
@@ -449,6 +505,7 @@ public static final int GGML_EXIT_ABORTED = 1;
     public static native @Cast("int64_t") long ggml_nelements(@Const ggml_tensor tensor);
     public static native @Cast("int64_t") long ggml_nrows(@Const ggml_tensor tensor);
     public static native @Cast("size_t") long ggml_nbytes(@Const ggml_tensor tensor);
+    public static native @Cast("size_t") long ggml_nbytes_pad(@Const ggml_tensor tensor); // same as ggml_nbytes() but padded to GGML_MEM_ALIGN
     public static native @Cast("size_t") long ggml_nbytes_split(@Const ggml_tensor tensor, int nrows_split);
 
     public static native int ggml_blck_size(@Cast("ggml_type") int type);
@@ -457,6 +514,7 @@ public static final int GGML_EXIT_ABORTED = 1;
 
     public static native @Cast("const char*") BytePointer ggml_type_name(@Cast("ggml_type") int type);
     public static native @Cast("const char*") BytePointer ggml_op_name(@Cast("ggml_op") int op);
+    public static native @Cast("const char*") BytePointer ggml_op_symbol(@Cast("ggml_op") int op);
 
     public static native @Cast("size_t") long ggml_element_size(@Const ggml_tensor tensor);
 
@@ -469,6 +527,8 @@ public static final int GGML_EXIT_ABORTED = 1;
     public static native @Cast("bool") boolean ggml_is_contiguous(@Const ggml_tensor tensor);
     public static native @Cast("bool") boolean ggml_is_permuted(@Const ggml_tensor tensor);
 
+    public static native @Cast("bool") boolean ggml_are_same_shape(@Const ggml_tensor t0, @Const ggml_tensor t1);
+
     // use this to compute the memory overhead of a tensor
     public static native @Cast("size_t") long ggml_tensor_overhead();
 
@@ -480,6 +540,7 @@ public static final int GGML_EXIT_ABORTED = 1;
     public static native @Cast("size_t") long ggml_used_mem(@Const ggml_context ctx);
 
     public static native @Cast("size_t") long ggml_set_scratch(ggml_context ctx, @ByVal ggml_scratch scratch);
+    public static native @Cast("bool") boolean ggml_get_no_alloc(ggml_context ctx);
     public static native void ggml_set_no_alloc(ggml_context ctx, @Cast("bool") boolean no_alloc);
 
     public static native Pointer ggml_get_mem_buffer(@Const ggml_context ctx);
@@ -550,17 +611,24 @@ public static final int GGML_EXIT_ABORTED = 1;
     public static native Pointer ggml_get_data(@Const ggml_tensor tensor);
     public static native FloatPointer ggml_get_data_f32(@Const ggml_tensor tensor);
 
+    public static native @Cast("ggml_unary_op") int ggml_get_unary_op(@Const ggml_tensor tensor);
+
     public static native @Cast("const char*") BytePointer ggml_get_name(@Const ggml_tensor tensor);
-    public static native ggml_tensor ggml_set_name(ggml_tensor tensor, @Cast("const char*") BytePointer name);
-    public static native ggml_tensor ggml_set_name(ggml_tensor tensor, String name);
-    public static native ggml_tensor ggml_format_name(ggml_tensor tensor, @Cast("const char*") BytePointer fmt);
-    public static native ggml_tensor ggml_format_name(ggml_tensor tensor, String fmt);
+    public static native ggml_tensor ggml_set_name(      ggml_tensor tensor, @Cast("const char*") BytePointer name);
+    public static native ggml_tensor ggml_set_name(      ggml_tensor tensor, String name);
+    public static native ggml_tensor ggml_format_name(      ggml_tensor tensor, @Cast("const char*") BytePointer fmt);
+    public static native ggml_tensor ggml_format_name(      ggml_tensor tensor, String fmt);
 
     //
     // operations on tensors with backpropagation
     //
 
     public static native ggml_tensor ggml_dup(
+                ggml_context ctx,
+                ggml_tensor a);
+
+    // in-place, returns view(a)
+    public static native ggml_tensor ggml_dup_inplace(
                 ggml_context ctx,
                 ggml_tensor a);
 
@@ -688,6 +756,13 @@ public static final int GGML_EXIT_ABORTED = 1;
                 ggml_tensor a,
                 ggml_tensor b);
 
+    // concat a and b on dim 2
+    // used in stable-diffusion
+    public static native ggml_tensor ggml_concat(
+                ggml_context ctx,
+                ggml_tensor a,
+                ggml_tensor b);
+
     public static native ggml_tensor ggml_abs(
                 ggml_context ctx,
                 ggml_tensor a);
@@ -777,25 +852,42 @@ public static final int GGML_EXIT_ABORTED = 1;
                 ggml_tensor b);
 
     // normalize along rows
-    // TODO: eps is hardcoded to 1e-5 for now
     public static native ggml_tensor ggml_norm(
                 ggml_context ctx,
-                ggml_tensor a);
+                ggml_tensor a,
+                float eps);
 
     public static native ggml_tensor ggml_norm_inplace(
                 ggml_context ctx,
-                ggml_tensor a);
+                ggml_tensor a,
+                float eps);
 
     public static native ggml_tensor ggml_rms_norm(
                 ggml_context ctx,
-                ggml_tensor a);
+                ggml_tensor a,
+                float eps);
 
     public static native ggml_tensor ggml_rms_norm_inplace(
                 ggml_context ctx,
-                ggml_tensor a);
+                ggml_tensor a,
+                float eps);
+
+    // group normalize along ne0*ne1*n_groups
+    // used in stable-diffusion
+    // TODO: eps is hardcoded to 1e-6 for now
+    public static native ggml_tensor ggml_group_norm(
+                ggml_context ctx,
+                ggml_tensor a,
+                int n_groups);
+
+    public static native ggml_tensor ggml_group_norm_inplace(
+                ggml_context ctx,
+                ggml_tensor a,
+                int n_groups);
 
     // a - x
     // b - dy
+    // TODO: update with configurable eps
     public static native ggml_tensor ggml_rms_norm_back(
                 ggml_context ctx,
                 ggml_tensor a,
@@ -887,8 +979,19 @@ public static final int GGML_EXIT_ABORTED = 1;
                 ggml_tensor a,
                 ggml_tensor b);
 
+    // a -> b, in-place, return view(b)
+    public static native ggml_tensor ggml_cpy_inplace(
+                ggml_context ctx,
+                ggml_tensor a,
+                ggml_tensor b);
+
     // make contiguous
     public static native ggml_tensor ggml_cont(
+                ggml_context ctx,
+                ggml_tensor a);
+
+    // make contiguous, in-place
+    public static native ggml_tensor ggml_cont_inplace(
                 ggml_context ctx,
                 ggml_tensor a);
 
@@ -1060,6 +1163,37 @@ public static final int GGML_EXIT_ABORTED = 1;
                 int mode,
                 int n_ctx);
 
+    // custom RoPE
+    public static native ggml_tensor ggml_rope_custom(
+                ggml_context ctx,
+                ggml_tensor a,
+                int n_past,
+                int n_dims,
+                int mode,
+                int n_ctx,
+                float freq_base,
+                float freq_scale);
+
+    // in-place, returns view(a)
+    public static native ggml_tensor ggml_rope_custom_inplace(
+                ggml_context ctx,
+                ggml_tensor a,
+                int n_past,
+                int n_dims,
+                int mode,
+                int n_ctx,
+                float freq_base,
+                float freq_scale);
+
+    // xPos RoPE, in-place, returns view(a)
+    public static native ggml_tensor ggml_rope_xpos_inplace(
+                ggml_context ctx,
+                ggml_tensor a,
+                int n_past,
+                int n_dims,
+                float base,
+                @Cast("bool") boolean down);
+
     // rotary position embedding backward, i.e compute dx from dy
     // a - dy
     public static native ggml_tensor ggml_rope_back(
@@ -1067,7 +1201,12 @@ public static final int GGML_EXIT_ABORTED = 1;
                 ggml_tensor a,
                 int n_past,
                 int n_dims,
-                int mode);
+                int mode,
+                int n_ctx,
+                float freq_base,
+                float freq_scale,
+                float xpos_base,
+                @Cast("bool") boolean xpos_down);
 
     // alibi position embedding
     // in-place, returns view(a)
@@ -1094,6 +1233,15 @@ public static final int GGML_EXIT_ABORTED = 1;
                 int p0,
                 int d0); // dilation
 
+    // conv_1d with padding = half
+    // alias for ggml_conv_1d(a, b, s, a->ne[0]/2, d)
+    public static native ggml_tensor ggml_conv_1d_ph(
+                ggml_context ctx,
+                ggml_tensor a,
+                ggml_tensor b,
+                int s,
+                int d);
+
     public static native ggml_tensor ggml_conv_2d(
                 ggml_context ctx,
                 ggml_tensor a,
@@ -1105,14 +1253,70 @@ public static final int GGML_EXIT_ABORTED = 1;
                 int d0,
                 int d1);
 
-    // conv_1d with padding = half
-    // alias for ggml_conv_1d(a, b, s, a->ne[0]/2, d)
-    public static native ggml_tensor ggml_conv_1d_ph(
+
+    // kernel size is a->ne[0] x a->ne[1]
+    // stride is equal to kernel size
+    // padding is zero
+    // example:
+    // a:     16   16    3  768
+    // b:   1024 1024    3    1
+    // res:   64   64  768    1
+    // used in sam
+    public static native ggml_tensor ggml_conv_2d_sk_p0(
+                ggml_context ctx,
+                ggml_tensor a,
+                ggml_tensor b);
+
+    // kernel size is a->ne[0] x a->ne[1]
+    // stride is 1
+    // padding is half
+    // example:
+    // a:      3    3    256  256
+    // b:     64   64    256    1
+    // res:   64   64    256    1
+    // used in sam
+    public static native ggml_tensor ggml_conv_2d_s1_ph(
+                ggml_context ctx,
+                ggml_tensor a,
+                ggml_tensor b);
+
+    public static native ggml_tensor ggml_conv_transpose_2d_p0(
                 ggml_context ctx,
                 ggml_tensor a,
                 ggml_tensor b,
-                int s,
-                int d);
+                int stride);
+
+    /** enum ggml_op_pool */
+    public static final int
+        GGML_OP_POOL_MAX = 0,
+        GGML_OP_POOL_AVG = 1,
+        GGML_OP_POOL_COUNT = 2;
+
+    public static native ggml_tensor ggml_pool_1d(
+                ggml_context ctx,
+                ggml_tensor a,
+                @Cast("ggml_op_pool") int op,
+                int k0,
+                int s0,
+                int p0); // padding
+
+    public static native ggml_tensor ggml_pool_2d(
+                ggml_context ctx,
+                ggml_tensor a,
+                @Cast("ggml_op_pool") int op,
+                int k0,
+                int k1,
+                int s0,
+                int s1,
+                int p0,
+                int p1);
+
+    // nearest interpolate
+    // used in stable-diffusion
+    public static native ggml_tensor ggml_upscale(
+                ggml_context ctx,
+                ggml_tensor a,
+                int scale_factor);
 
     public static native ggml_tensor ggml_flash_attn(
                 ggml_context ctx,
@@ -1156,6 +1360,37 @@ public static final int GGML_EXIT_ABORTED = 1;
                 int w0,
                 int h0,
                 int w);
+
+    public static native ggml_tensor ggml_unary(
+                ggml_context ctx,
+                 ggml_tensor a,
+                 @Cast("ggml_unary_op") int op);
+
+    public static native ggml_tensor ggml_unary_inplace(
+            ggml_context ctx,
+            ggml_tensor a,
+            @Cast("ggml_unary_op") int op);
+
+    // used in sam
+    public static native ggml_tensor ggml_get_rel_pos(
+                ggml_context ctx,
+                ggml_tensor a,
+                int qh,
+                int kh);
+
+    // used in sam
+
+    public static native ggml_tensor ggml_add_rel_pos(
+                ggml_context ctx,
+                ggml_tensor a,
+                ggml_tensor pw,
+                ggml_tensor ph);
+
+    public static native ggml_tensor ggml_add_rel_pos_inplace(
+                ggml_context ctx,
+                ggml_tensor a,
+                ggml_tensor pw,
+                ggml_tensor ph);
 // Targeting ../ggml_unary_op_f32_t.java
 
 
@@ -1229,6 +1464,65 @@ public static final int GGML_EXIT_ABORTED = 1;
                 ggml_tensor b,
                 ggml_tensor c,
                        ggml_custom3_op_f32_t fun);
+// Targeting ../ggml_custom1_op_t.java
+
+
+// Targeting ../ggml_custom2_op_t.java
+
+
+// Targeting ../ggml_custom3_op_t.java
+
+
+
+    public static final int GGML_N_TASKS_MAX = -1;
+
+    public static native ggml_tensor ggml_map_custom1(
+                ggml_context ctx,
+                ggml_tensor a,
+                ggml_custom1_op_t fun,
+                int n_tasks,
+                Pointer userdata);
+
+    public static native ggml_tensor ggml_map_custom1_inplace(
+                ggml_context ctx,
+                ggml_tensor a,
+                ggml_custom1_op_t fun,
+                int n_tasks,
+                Pointer userdata);
+
+    public static native ggml_tensor ggml_map_custom2(
+                ggml_context ctx,
+                ggml_tensor a,
+                ggml_tensor b,
+                ggml_custom2_op_t fun,
+                int n_tasks,
+                Pointer userdata);
+
+    public static native ggml_tensor ggml_map_custom2_inplace(
+                ggml_context ctx,
+                ggml_tensor a,
+                ggml_tensor b,
+                ggml_custom2_op_t fun,
+                int n_tasks,
+                Pointer userdata);
+
+    public static native ggml_tensor ggml_map_custom3(
+                ggml_context ctx,
+                ggml_tensor a,
+                ggml_tensor b,
+                ggml_tensor c,
+                ggml_custom3_op_t fun,
+                int n_tasks,
+                Pointer userdata);
+
+    public static native ggml_tensor ggml_map_custom3_inplace(
+                ggml_context ctx,
+                ggml_tensor a,
+                ggml_tensor b,
+                ggml_tensor c,
+                ggml_custom3_op_t fun,
+                int n_tasks,
+                Pointer userdata);
 
     // loss function
 
@@ -1251,10 +1545,16 @@ public static final int GGML_EXIT_ABORTED = 1;
                 ggml_context ctx,
                 ggml_tensor tensor);
 
+
     public static native void ggml_build_forward_expand(ggml_cgraph cgraph, ggml_tensor tensor);
 
     public static native @ByVal ggml_cgraph ggml_build_forward(ggml_tensor tensor);
     public static native @ByVal ggml_cgraph ggml_build_backward(ggml_context ctx, ggml_cgraph gf, @Cast("bool") boolean keep);
+
+    // graph allocation in a context
+    public static native ggml_cgraph ggml_new_graph(ggml_context ctx);
+    public static native ggml_cgraph ggml_build_forward_ctx(ggml_context ctx, ggml_tensor tensor);
+    public static native @Cast("size_t") long ggml_graph_overhead();
 
     // ggml_graph_plan() has to be called before ggml_graph_compute()
     // when plan.work_size > 0, caller must allocate memory for plan.work_data
@@ -1376,6 +1676,149 @@ public static final int GGML_EXIT_ABORTED = 1;
     public static native @Cast("size_t") long ggml_quantize_chunk(@Cast("ggml_type") int type, @Const float[] src, Pointer dst, int start, int n, @Cast("int64_t*") long[] hist);
 
     //
+    // gguf
+    //
+
+    /** enum gguf_type */
+    public static final int
+        GGUF_TYPE_UINT8   = 0,
+        GGUF_TYPE_INT8    = 1,
+        GGUF_TYPE_UINT16  = 2,
+        GGUF_TYPE_INT16   = 3,
+        GGUF_TYPE_UINT32  = 4,
+        GGUF_TYPE_INT32   = 5,
+        GGUF_TYPE_FLOAT32 = 6,
+        GGUF_TYPE_BOOL    = 7,
+        GGUF_TYPE_STRING  = 8,
+        GGUF_TYPE_ARRAY   = 9,
+        GGUF_TYPE_UINT64  = 10,
+        GGUF_TYPE_INT64   = 11,
+        GGUF_TYPE_FLOAT64 = 12,
+        GGUF_TYPE_COUNT = 13;       // marks the end of the enum
+// Targeting ../gguf_context.java
+
+
+// Targeting ../gguf_init_params.java
+
+
+
+    public static native gguf_context gguf_init_empty();
+    public static native gguf_context gguf_init_from_file(@Cast("const char*") BytePointer fname, @ByVal gguf_init_params params);
+    public static native gguf_context gguf_init_from_file(String fname, @ByVal gguf_init_params params);
+    //GGML_API struct gguf_context * gguf_init_from_buffer(..);
+
+    public static native void gguf_free(gguf_context ctx);
+
+    public static native @Cast("const char*") BytePointer gguf_type_name(@Cast("gguf_type") int type);
+
+    public static native int gguf_get_version(gguf_context ctx);
+    public static native @Cast("size_t") long gguf_get_alignment(gguf_context ctx);
+    public static native @Cast("size_t") long gguf_get_data_offset(gguf_context ctx);
+    public static native Pointer gguf_get_data(gguf_context ctx);
+
+    public static native int gguf_get_n_kv(gguf_context ctx);
+    public static native int gguf_find_key(gguf_context ctx, @Cast("const char*") BytePointer key);
+    public static native int gguf_find_key(gguf_context ctx, String key);
+    public static native @Cast("const char*") BytePointer gguf_get_key(gguf_context ctx, int i);
+
+    public static native @Cast("gguf_type") int gguf_get_kv_type(gguf_context ctx, int i);
+    public static native @Cast("gguf_type") int gguf_get_arr_type(gguf_context ctx, int i);
+
+    // results are undefined if the wrong type is used for the key
+    public static native @Cast("uint8_t") byte gguf_get_val_u8(gguf_context ctx, int i);
+    public static native byte gguf_get_val_i8(gguf_context ctx, int i);
+    public static native @Cast("uint16_t") short gguf_get_val_u16(gguf_context ctx, int i);
+    public static native short gguf_get_val_i16(gguf_context ctx, int i);
+    public static native @Cast("uint32_t") int gguf_get_val_u32(gguf_context ctx, int i);
+    public static native int gguf_get_val_i32(gguf_context ctx, int i);
+    public static native float gguf_get_val_f32(gguf_context ctx, int i);
+    public static native @Cast("uint64_t") long gguf_get_val_u64(gguf_context ctx, int i);
+    public static native @Cast("int64_t") long gguf_get_val_i64(gguf_context ctx, int i);
+    public static native double gguf_get_val_f64(gguf_context ctx, int i);
+    public static native @Cast("bool") boolean gguf_get_val_bool(gguf_context ctx, int i);
+    public static native @Cast("const char*") BytePointer gguf_get_val_str(gguf_context ctx, int i);
+    public static native int gguf_get_arr_n(gguf_context ctx, int i);
+    public static native @Const Pointer gguf_get_arr_data(gguf_context ctx, int i);
+    public static native @Cast("const char*") BytePointer gguf_get_arr_str(gguf_context ctx, int key_id, int i);
+
+    public static native int gguf_get_n_tensors(gguf_context ctx);
+    public static native int gguf_find_tensor(gguf_context ctx, @Cast("const char*") BytePointer name);
+    public static native int gguf_find_tensor(gguf_context ctx, String name);
+    public static native @Cast("size_t") long gguf_get_tensor_offset(gguf_context ctx, int i);
+    public static native @Cast("char*") BytePointer gguf_get_tensor_name(gguf_context ctx, int i);
+
+    // overrides existing values or adds a new one
+    public static native void gguf_set_val_u8(gguf_context ctx, @Cast("const char*") BytePointer key, @Cast("uint8_t") byte val);
+    public static native void gguf_set_val_u8(gguf_context ctx, String key, @Cast("uint8_t") byte val);
+    public static native void gguf_set_val_i8(gguf_context ctx, @Cast("const char*") BytePointer key, byte val);
+    public static native void gguf_set_val_i8(gguf_context ctx, String key, byte val);
+    public static native void gguf_set_val_u16(gguf_context ctx, @Cast("const char*") BytePointer key, @Cast("uint16_t") short val);
+    public static native void gguf_set_val_u16(gguf_context ctx, String key, @Cast("uint16_t") short val);
+    public static native void gguf_set_val_i16(gguf_context ctx, @Cast("const char*") BytePointer key, short val);
+    public static native void gguf_set_val_i16(gguf_context ctx, String key, short val);
+    public static native void gguf_set_val_u32(gguf_context ctx, @Cast("const char*") BytePointer key, @Cast("uint32_t") int val);
+    public static native void gguf_set_val_u32(gguf_context ctx, String key, @Cast("uint32_t") int val);
+    public static native void gguf_set_val_i32(gguf_context ctx, @Cast("const char*") BytePointer key, int val);
+    public static native void gguf_set_val_i32(gguf_context ctx, String key, int val);
+    public static native void gguf_set_val_f32(gguf_context ctx, @Cast("const char*") BytePointer key, float val);
+    public static native void gguf_set_val_f32(gguf_context ctx, String key, float val);
+    public static native void gguf_set_val_u64(gguf_context ctx, @Cast("const char*") BytePointer key, @Cast("uint64_t") long val);
+    public static native void gguf_set_val_u64(gguf_context ctx, String key, @Cast("uint64_t") long val);
+    public static native void gguf_set_val_i64(gguf_context ctx, @Cast("const char*") BytePointer key, @Cast("int64_t") long val);
+    public static native void gguf_set_val_i64(gguf_context ctx, String key, @Cast("int64_t") long val);
+    public static native void gguf_set_val_f64(gguf_context ctx, @Cast("const char*") BytePointer key, double val);
+    public static native void gguf_set_val_f64(gguf_context ctx, String key, double val);
+    public static native void gguf_set_val_bool(gguf_context ctx, @Cast("const char*") BytePointer key, @Cast("bool") boolean val);
+    public static native void gguf_set_val_bool(gguf_context ctx, String key, @Cast("bool") boolean val);
+    public static native void gguf_set_val_str(gguf_context ctx, @Cast("const char*") BytePointer key, @Cast("const char*") BytePointer val);
+    public static native void gguf_set_val_str(gguf_context ctx, String key, String val);
+    public static native void gguf_set_arr_data(gguf_context ctx, @Cast("const char*") BytePointer key, @Cast("gguf_type") int type, @Const Pointer data, int n);
+    public static native void gguf_set_arr_data(gguf_context ctx, String key, @Cast("gguf_type") int type, @Const Pointer data, int n);
+    public static native void gguf_set_arr_str(gguf_context ctx, @Cast("const char*") BytePointer key, @Cast("const char**") PointerPointer data, int n);
+    public static native void gguf_set_arr_str(gguf_context ctx, @Cast("const char*") BytePointer key, @Cast("const char**") @ByPtrPtr BytePointer data, int n);
+    public static native void gguf_set_arr_str(gguf_context ctx, String key, @Cast("const char**") @ByPtrPtr ByteBuffer data, int n);
+    public static native void gguf_set_arr_str(gguf_context ctx, @Cast("const char*") BytePointer key, @Cast("const char**") @ByPtrPtr byte[] data, int n);
+    public static native void gguf_set_arr_str(gguf_context ctx, String key, @Cast("const char**") @ByPtrPtr BytePointer data, int n);
+    public static native void gguf_set_arr_str(gguf_context ctx, @Cast("const char*") BytePointer key, @Cast("const char**") @ByPtrPtr ByteBuffer data, int n);
+    public static native void gguf_set_arr_str(gguf_context ctx, String key, @Cast("const char**") @ByPtrPtr byte[] data, int n);
+
+    // set or add KV pairs from another context
+    public static native void gguf_set_kv(gguf_context ctx, gguf_context src);
+
+    // manage tensor info
+    public static native void gguf_add_tensor(gguf_context ctx, @Const ggml_tensor tensor);
+    public static native void gguf_set_tensor_type(gguf_context ctx, @Cast("const char*") BytePointer name, @Cast("ggml_type") int type);
+    public static native void gguf_set_tensor_type(gguf_context ctx, String name, @Cast("ggml_type") int type);
+    public static native void gguf_set_tensor_data(gguf_context ctx, @Cast("const char*") BytePointer name, @Const Pointer data, @Cast("size_t") long size);
+    public static native void gguf_set_tensor_data(gguf_context ctx, String name, @Const Pointer data, @Cast("size_t") long size);
+
+    // writing gguf files can be done in 2 ways:
+    //
+    // - write the entire gguf_context to a binary file in a single pass:
+    //
+    //   gguf_write_to_file(ctx, fname);
+    //
+    // - first prepare a file with a placeholder for the meta data, write the tensor data, then write the meta data:
+    //
+    //   FILE * f = fopen(fname, "wb");
+    //   fseek(f, gguf_get_meta_size(ctx), SEEK_SET);
+    //   fwrite(f, ...);
+    //   void * data = gguf_meta_get_meta_data(ctx);
+    //   fseek(f, 0, SEEK_SET);
+    //   fwrite(f, data, gguf_get_meta_size(ctx));
+    //   free(data);
+    //   fclose(f);
+    //
+
+    // write the entire context to a binary file
+    public static native void gguf_write_to_file(gguf_context ctx, @Cast("const char*") BytePointer fname, @Cast("bool") boolean only_meta);
+    public static native void gguf_write_to_file(gguf_context ctx, String fname, @Cast("bool") boolean only_meta);
+
+    // get the size in bytes of the meta data (header, kv pairs, tensor info) including padding
+    public static native @Cast("size_t") long gguf_get_meta_size(gguf_context ctx);
+    public static native void gguf_get_meta_data(gguf_context ctx, Pointer data);
+
+    //
     // system info
     //
 
@@ -1395,6 +1838,7 @@ public static final int GGML_EXIT_ABORTED = 1;
     public static native int ggml_cpu_has_clblast();
     public static native int ggml_cpu_has_gpublas();
     public static native int ggml_cpu_has_sse3();
+    public static native int ggml_cpu_has_ssse3();
     public static native int ggml_cpu_has_vsx();
 
     //
@@ -1417,76 +1861,163 @@ public static final int GGML_EXIT_ABORTED = 1;
 
 
 
-    public static native @ByVal ggml_type_traits_t ggml_internal_get_type_traits(@Cast("ggml_type") int i);
+    public static native @ByVal ggml_type_traits_t ggml_internal_get_type_traits(@Cast("ggml_type") int type);
 
 // #ifdef  __cplusplus
 // #endif
 
 
-// Parsed from llama-util.h
+// Parsed from k_quants.h
 
-// Internal header to be included only by llama.cpp.
-// Contains wrappers around OS interfaces.
+// #pragma once
 
-// #ifndef LLAMA_UTIL_H
-// #define LLAMA_UTIL_H
+// #include "ggml.h"
 
-// #include <cstdio>
-// #include <cstdint>
-// #include <cerrno>
-// #include <cstring>
-// #include <cstdarg>
-// #include <cstdlib>
-// #include <climits>
+// #include <stdint.h>
+// #include <assert.h>
+// #include <stddef.h>
 
-// #include <string>
-// #include <vector>
-// #include <stdexcept>
-
-// #ifdef __has_include
-//     #if __has_include(<unistd.h>)
-//         #include <unistd.h>
-//         #if defined(_POSIX_MAPPED_FILES)
-//             #include <sys/mman.h>
-//         #endif
-//         #if defined(_POSIX_MEMLOCK_RANGE)
-//             #include <sys/resource.h>
-//         #endif
-//     #endif
-// #endif
-
-// #if defined(_WIN32)
-// #endif
-
-// #define LLAMA_ASSERT(x)
-//     do {
-//         if (!(x)) {
-//             fprintf(stderr, "LLAMA_ASSERT: %s:%d: %s\n", __FILE__, __LINE__, #x);
-//             abort();
-//         }
-//     } while (0)
-
-// #ifdef __GNUC__
-// #ifdef __MINGW32__
-public static native @StdString BytePointer format(@Cast("const char*") BytePointer fmt);
-public static native @StdString String format(String fmt);
-// Targeting ../llama_file.java
-
-
-// Targeting ../llama_mmap.java
-
-
-// Targeting ../llama_mlock.java
-
-
-// Targeting ../llama_buffer.java
-
-
-
-// #ifdef GGML_USE_CUBLAS
+// Super-block size
+// #ifdef GGML_QKK_64
 // #else
+public static final int QK_K = 256;
+public static final int K_SCALE_SIZE = 12;
 // #endif
 
+// #ifndef static_assert
+// #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201100L)
+// #define static_assert(cond, msg) _Static_assert(cond, msg)
+// #else
+// #define static_assert(cond, msg) struct global_scope_noop_trick
+// Targeting ../block_q2_K.java
+
+
+// Targeting ../block_q3_K.java
+
+
+// Targeting ../block_q4_K.java
+
+
+// Targeting ../block_q5_K.java
+
+
+// Targeting ../block_q6_K.java
+
+
+// Targeting ../block_q8_K.java
+
+
+
+
+// Quantization
+public static native void quantize_row_q2_K_reference(@Const FloatPointer x, block_q2_K y, int k);
+public static native void quantize_row_q2_K_reference(@Const FloatBuffer x, block_q2_K y, int k);
+public static native void quantize_row_q2_K_reference(@Const float[] x, block_q2_K y, int k);
+public static native void quantize_row_q3_K_reference(@Const FloatPointer x, block_q3_K y, int k);
+public static native void quantize_row_q3_K_reference(@Const FloatBuffer x, block_q3_K y, int k);
+public static native void quantize_row_q3_K_reference(@Const float[] x, block_q3_K y, int k);
+public static native void quantize_row_q4_K_reference(@Const FloatPointer x, block_q4_K y, int k);
+public static native void quantize_row_q4_K_reference(@Const FloatBuffer x, block_q4_K y, int k);
+public static native void quantize_row_q4_K_reference(@Const float[] x, block_q4_K y, int k);
+public static native void quantize_row_q5_K_reference(@Const FloatPointer x, block_q5_K y, int k);
+public static native void quantize_row_q5_K_reference(@Const FloatBuffer x, block_q5_K y, int k);
+public static native void quantize_row_q5_K_reference(@Const float[] x, block_q5_K y, int k);
+public static native void quantize_row_q6_K_reference(@Const FloatPointer x, block_q6_K y, int k);
+public static native void quantize_row_q6_K_reference(@Const FloatBuffer x, block_q6_K y, int k);
+public static native void quantize_row_q6_K_reference(@Const float[] x, block_q6_K y, int k);
+public static native void quantize_row_q8_K_reference(@Const FloatPointer x, block_q8_K y, int k);
+public static native void quantize_row_q8_K_reference(@Const FloatBuffer x, block_q8_K y, int k);
+public static native void quantize_row_q8_K_reference(@Const float[] x, block_q8_K y, int k);
+
+public static native void quantize_row_q2_K(@Const FloatPointer x, Pointer y, int k);
+public static native void quantize_row_q2_K(@Const FloatBuffer x, Pointer y, int k);
+public static native void quantize_row_q2_K(@Const float[] x, Pointer y, int k);
+public static native void quantize_row_q3_K(@Const FloatPointer x, Pointer y, int k);
+public static native void quantize_row_q3_K(@Const FloatBuffer x, Pointer y, int k);
+public static native void quantize_row_q3_K(@Const float[] x, Pointer y, int k);
+public static native void quantize_row_q4_K(@Const FloatPointer x, Pointer y, int k);
+public static native void quantize_row_q4_K(@Const FloatBuffer x, Pointer y, int k);
+public static native void quantize_row_q4_K(@Const float[] x, Pointer y, int k);
+public static native void quantize_row_q5_K(@Const FloatPointer x, Pointer y, int k);
+public static native void quantize_row_q5_K(@Const FloatBuffer x, Pointer y, int k);
+public static native void quantize_row_q5_K(@Const float[] x, Pointer y, int k);
+public static native void quantize_row_q6_K(@Const FloatPointer x, Pointer y, int k);
+public static native void quantize_row_q6_K(@Const FloatBuffer x, Pointer y, int k);
+public static native void quantize_row_q6_K(@Const float[] x, Pointer y, int k);
+public static native void quantize_row_q8_K(@Const FloatPointer x, Pointer y, int k);
+public static native void quantize_row_q8_K(@Const FloatBuffer x, Pointer y, int k);
+public static native void quantize_row_q8_K(@Const float[] x, Pointer y, int k);
+
+// Dequantization
+public static native void dequantize_row_q2_K(@Const block_q2_K x, FloatPointer y, int k);
+public static native void dequantize_row_q2_K(@Const block_q2_K x, FloatBuffer y, int k);
+public static native void dequantize_row_q2_K(@Const block_q2_K x, float[] y, int k);
+public static native void dequantize_row_q3_K(@Const block_q3_K x, FloatPointer y, int k);
+public static native void dequantize_row_q3_K(@Const block_q3_K x, FloatBuffer y, int k);
+public static native void dequantize_row_q3_K(@Const block_q3_K x, float[] y, int k);
+public static native void dequantize_row_q4_K(@Const block_q4_K x, FloatPointer y, int k);
+public static native void dequantize_row_q4_K(@Const block_q4_K x, FloatBuffer y, int k);
+public static native void dequantize_row_q4_K(@Const block_q4_K x, float[] y, int k);
+public static native void dequantize_row_q5_K(@Const block_q5_K x, FloatPointer y, int k);
+public static native void dequantize_row_q5_K(@Const block_q5_K x, FloatBuffer y, int k);
+public static native void dequantize_row_q5_K(@Const block_q5_K x, float[] y, int k);
+public static native void dequantize_row_q6_K(@Const block_q6_K x, FloatPointer y, int k);
+public static native void dequantize_row_q6_K(@Const block_q6_K x, FloatBuffer y, int k);
+public static native void dequantize_row_q6_K(@Const block_q6_K x, float[] y, int k);
+public static native void dequantize_row_q8_K(@Const block_q8_K x, FloatPointer y, int k);
+public static native void dequantize_row_q8_K(@Const block_q8_K x, FloatBuffer y, int k);
+public static native void dequantize_row_q8_K(@Const block_q8_K x, float[] y, int k);
+
+// Dot product
+public static native void ggml_vec_dot_q2_K_q8_K(int n, FloatPointer s, @Const Pointer vx, @Const Pointer vy);
+public static native void ggml_vec_dot_q2_K_q8_K(int n, FloatBuffer s, @Const Pointer vx, @Const Pointer vy);
+public static native void ggml_vec_dot_q2_K_q8_K(int n, float[] s, @Const Pointer vx, @Const Pointer vy);
+public static native void ggml_vec_dot_q3_K_q8_K(int n, FloatPointer s, @Const Pointer vx, @Const Pointer vy);
+public static native void ggml_vec_dot_q3_K_q8_K(int n, FloatBuffer s, @Const Pointer vx, @Const Pointer vy);
+public static native void ggml_vec_dot_q3_K_q8_K(int n, float[] s, @Const Pointer vx, @Const Pointer vy);
+public static native void ggml_vec_dot_q4_K_q8_K(int n, FloatPointer s, @Const Pointer vx, @Const Pointer vy);
+public static native void ggml_vec_dot_q4_K_q8_K(int n, FloatBuffer s, @Const Pointer vx, @Const Pointer vy);
+public static native void ggml_vec_dot_q4_K_q8_K(int n, float[] s, @Const Pointer vx, @Const Pointer vy);
+public static native void ggml_vec_dot_q5_K_q8_K(int n, FloatPointer s, @Const Pointer vx, @Const Pointer vy);
+public static native void ggml_vec_dot_q5_K_q8_K(int n, FloatBuffer s, @Const Pointer vx, @Const Pointer vy);
+public static native void ggml_vec_dot_q5_K_q8_K(int n, float[] s, @Const Pointer vx, @Const Pointer vy);
+public static native void ggml_vec_dot_q6_K_q8_K(int n, FloatPointer s, @Const Pointer vx, @Const Pointer vy);
+public static native void ggml_vec_dot_q6_K_q8_K(int n, FloatBuffer s, @Const Pointer vx, @Const Pointer vy);
+public static native void ggml_vec_dot_q6_K_q8_K(int n, float[] s, @Const Pointer vx, @Const Pointer vy);
+
+// Quantization with histogram collection
+public static native @Cast("size_t") long ggml_quantize_q2_K(@Const FloatPointer src, Pointer dst, int n, int k, @Cast("int64_t*") LongPointer hist);
+public static native @Cast("size_t") long ggml_quantize_q2_K(@Const FloatBuffer src, Pointer dst, int n, int k, @Cast("int64_t*") LongBuffer hist);
+public static native @Cast("size_t") long ggml_quantize_q2_K(@Const float[] src, Pointer dst, int n, int k, @Cast("int64_t*") long[] hist);
+public static native @Cast("size_t") long ggml_quantize_q3_K(@Const FloatPointer src, Pointer dst, int n, int k, @Cast("int64_t*") LongPointer hist);
+public static native @Cast("size_t") long ggml_quantize_q3_K(@Const FloatBuffer src, Pointer dst, int n, int k, @Cast("int64_t*") LongBuffer hist);
+public static native @Cast("size_t") long ggml_quantize_q3_K(@Const float[] src, Pointer dst, int n, int k, @Cast("int64_t*") long[] hist);
+public static native @Cast("size_t") long ggml_quantize_q4_K(@Const FloatPointer src, Pointer dst, int n, int k, @Cast("int64_t*") LongPointer hist);
+public static native @Cast("size_t") long ggml_quantize_q4_K(@Const FloatBuffer src, Pointer dst, int n, int k, @Cast("int64_t*") LongBuffer hist);
+public static native @Cast("size_t") long ggml_quantize_q4_K(@Const float[] src, Pointer dst, int n, int k, @Cast("int64_t*") long[] hist);
+public static native @Cast("size_t") long ggml_quantize_q5_K(@Const FloatPointer src, Pointer dst, int n, int k, @Cast("int64_t*") LongPointer hist);
+public static native @Cast("size_t") long ggml_quantize_q5_K(@Const FloatBuffer src, Pointer dst, int n, int k, @Cast("int64_t*") LongBuffer hist);
+public static native @Cast("size_t") long ggml_quantize_q5_K(@Const float[] src, Pointer dst, int n, int k, @Cast("int64_t*") long[] hist);
+public static native @Cast("size_t") long ggml_quantize_q6_K(@Const FloatPointer src, Pointer dst, int n, int k, @Cast("int64_t*") LongPointer hist);
+public static native @Cast("size_t") long ggml_quantize_q6_K(@Const FloatBuffer src, Pointer dst, int n, int k, @Cast("int64_t*") LongBuffer hist);
+public static native @Cast("size_t") long ggml_quantize_q6_K(@Const float[] src, Pointer dst, int n, int k, @Cast("int64_t*") long[] hist);
+
+
+
+// Parsed from ggml-alloc.h
+
+// #pragma once
+
+// #include "ggml.h"
+
+// #ifdef  __cplusplus
+// #endif
+
+// tell the allocator to parse nodes following the order described in the list
+// you should call this if your graph are optimized to execute out-of-order
+
+
+// #ifdef  __cplusplus
 // #endif
 
 
@@ -1517,19 +2048,12 @@ public static final int LLAMA_MAX_DEVICES = 1;
 // #    define DEPRECATED(func, hint) func
 // #endif
 
-public static final int LLAMA_FILE_MAGIC_GGJT =        0x67676a74; // 'ggjt'
-public static final int LLAMA_FILE_MAGIC_GGLA =        0x67676c61; // 'ggla'
-public static final int LLAMA_FILE_MAGIC_GGMF =        0x67676d66; // 'ggmf'
-public static final int LLAMA_FILE_MAGIC_GGML =        0x67676d6c; // 'ggml'
-public static final int LLAMA_FILE_MAGIC_GGSN =        0x6767736e; // 'ggsn'
+public static final int LLAMA_DEFAULT_SEED = 0xFFFFFFFF;
 
-public static final int LLAMA_FILE_VERSION =           3;
-public static final int LLAMA_FILE_MAGIC =             LLAMA_FILE_MAGIC_GGJT;
-public static final int LLAMA_FILE_MAGIC_UNVERSIONED = LLAMA_FILE_MAGIC_GGML;
-public static final int LLAMA_SESSION_MAGIC =          LLAMA_FILE_MAGIC_GGSN;
-public static final int LLAMA_SESSION_VERSION =        1;
+public static final int LLAMA_FILE_MAGIC_GGSN = 0x6767736e; // 'ggsn'
 
-public static final int LLAMA_DEFAULT_SEED =           0xFFFFFFFF;
+public static final int LLAMA_SESSION_MAGIC =   LLAMA_FILE_MAGIC_GGSN;
+public static final int LLAMA_SESSION_VERSION = 1;
 
 // #if defined(GGML_USE_CUBLAS) || defined(GGML_USE_CLBLAST) || defined(GGML_USE_METAL)
 // Defined when llama.cpp is compiled with support for offloading model layers to GPU.
@@ -1543,17 +2067,24 @@ public static final int LLAMA_DEFAULT_SEED =           0xFFFFFFFF;
 // Targeting ../llama_context.java
 
 
-// Targeting ../llama_token_data.java
 
+    /** enum llama_log_level */
+    public static final int
+        LLAMA_LOG_LEVEL_ERROR = 2,
+        LLAMA_LOG_LEVEL_WARN  = 3,
+        LLAMA_LOG_LEVEL_INFO  = 4;
 
-// Targeting ../llama_token_data_array.java
+    
 
-
-// Targeting ../llama_progress_callback.java
-
-
-// Targeting ../llama_context_params.java
-
+    /** enum llama_token_type */
+    public static final int
+        LLAMA_TOKEN_TYPE_UNDEFINED    = 0,
+        LLAMA_TOKEN_TYPE_NORMAL       = 1,
+        LLAMA_TOKEN_TYPE_UNKNOWN      = 2,
+        LLAMA_TOKEN_TYPE_CONTROL      = 3,
+        LLAMA_TOKEN_TYPE_USER_DEFINED = 4,
+        LLAMA_TOKEN_TYPE_UNUSED       = 5,
+        LLAMA_TOKEN_TYPE_BYTE         = 6;
 
     // model file types
     /** enum llama_ftype */
@@ -1576,8 +2107,57 @@ public static final int LLAMA_DEFAULT_SEED =           0xFFFFFFFF;
         LLAMA_FTYPE_MOSTLY_Q4_K_M        = 15,// except 1d tensors
         LLAMA_FTYPE_MOSTLY_Q5_K_S        = 16,// except 1d tensors
         LLAMA_FTYPE_MOSTLY_Q5_K_M        = 17,// except 1d tensors
-        LLAMA_FTYPE_MOSTLY_Q6_K          = 18;// except 1d tensors
+        LLAMA_FTYPE_MOSTLY_Q6_K          = 18,// except 1d tensors
+
+        LLAMA_FTYPE_GUESSED = 1024; // not specified in the model file
+// Targeting ../llama_token_data.java
+
+
+// Targeting ../llama_token_data_array.java
+
+
+// Targeting ../llama_progress_callback.java
+
+
+// Targeting ../llama_context_params.java
+
+
+// Targeting ../llama_log_callback.java
+
+
 // Targeting ../llama_model_quantize_params.java
+
+
+// Targeting ../llama_grammar.java
+
+
+
+    // grammar element type
+    /** enum llama_gretype */
+    public static final int
+        // end of rule definition
+        LLAMA_GRETYPE_END            = 0,
+
+        // start of alternate definition for rule
+        LLAMA_GRETYPE_ALT            = 1,
+
+        // non-terminal element: reference to rule
+        LLAMA_GRETYPE_RULE_REF       = 2,
+
+        // terminal element: character (code point)
+        LLAMA_GRETYPE_CHAR           = 3,
+
+        // inverse char(s) ([^a], [^a-b] [^abc])
+        LLAMA_GRETYPE_CHAR_NOT       = 4,
+
+        // modifies a preceding LLAMA_GRETYPE_CHAR or LLAMA_GRETYPE_CHAR_ALT to
+        // be an inclusive range ([a-z])
+        LLAMA_GRETYPE_CHAR_RNG_UPPER = 5,
+
+        // modifies a preceding LLAMA_GRETYPE_CHAR or
+        // LLAMA_GRETYPE_CHAR_RNG_UPPER to add an alternate char to match ([ab], [a-zA])
+        LLAMA_GRETYPE_CHAR_ALT       = 6;
+// Targeting ../llama_grammar_element.java
 
 
 // Targeting ../llama_timings.java
@@ -1587,18 +2167,13 @@ public static final int LLAMA_DEFAULT_SEED =           0xFFFFFFFF;
     public static native @ByVal llama_context_params llama_context_default_params();
     public static native @ByVal llama_model_quantize_params llama_model_quantize_default_params();
 
-    public static native @Cast("bool") boolean llama_mmap_supported();
-    public static native @Cast("bool") boolean llama_mlock_supported();
-
-    // TODO: not great API - very likely to change
     // Initialize the llama + ggml backend
     // If numa is true, use NUMA optimizations
     // Call once at the start of the program
     public static native void llama_backend_init(@Cast("bool") boolean numa);
+
     // Call once at the end of the program - currently only used for MPI
     public static native void llama_backend_free();
-
-    public static native @Cast("int64_t") long llama_time_us();
 
     public static native llama_model llama_load_model_from_file(
                                  @Cast("const char*") BytePointer path_model,
@@ -1613,13 +2188,33 @@ public static final int LLAMA_DEFAULT_SEED =           0xFFFFFFFF;
                          llama_model model,
                 @ByVal llama_context_params params);
 
-    // Various functions for loading a ggml llama model.
-    // Allocate (almost) all memory needed for the model.
-    // Return NULL on failure
-    
-
     // Frees all allocated memory
     public static native void llama_free(llama_context ctx);
+
+    public static native @Cast("int64_t") long llama_time_us();
+
+    public static native int llama_max_devices();
+    public static native @Cast("bool") boolean llama_mmap_supported();
+    public static native @Cast("bool") boolean llama_mlock_supported();
+
+    public static native int llama_n_vocab(@Const llama_context ctx);
+    public static native int llama_n_ctx(@Const llama_context ctx);
+    public static native int llama_n_embd(@Const llama_context ctx);
+
+    
+
+    public static native int llama_model_n_vocab(@Const llama_model model);
+    public static native int llama_model_n_ctx(@Const llama_model model);
+    public static native int llama_model_n_embd(@Const llama_model model);
+
+    // Get a string describing the model type
+    public static native int llama_model_desc(@Const llama_model model, @Cast("char*") BytePointer buf, @Cast("size_t") long buf_size);
+    public static native int llama_model_desc(@Const llama_model model, @Cast("char*") ByteBuffer buf, @Cast("size_t") long buf_size);
+    public static native int llama_model_desc(@Const llama_model model, @Cast("char*") byte[] buf, @Cast("size_t") long buf_size);
+    // Returns the total size of all the tensors in the model in bytes
+    public static native @Cast("uint64_t") long llama_model_size(@Const llama_model model);
+    // Returns the total number of parameters in the model
+    public static native @Cast("uint64_t") long llama_model_n_params(@Const llama_model model);
 
     // Returns 0 on success
     public static native int llama_model_quantize(
@@ -1641,14 +2236,14 @@ public static final int LLAMA_DEFAULT_SEED =           0xFFFFFFFF;
 
     public static native int llama_model_apply_lora_from_file(
                 @Const llama_model model,
-                          @Cast("const char*") BytePointer path_lora,
-                          @Cast("const char*") BytePointer path_base_model,
-                                 int n_threads);
+                              @Cast("const char*") BytePointer path_lora,
+                              @Cast("const char*") BytePointer path_base_model,
+                                     int n_threads);
     public static native int llama_model_apply_lora_from_file(
                 @Const llama_model model,
-                          String path_lora,
-                          String path_base_model,
-                                 int n_threads);
+                              String path_lora,
+                              String path_base_model,
+                                     int n_threads);
 
     // Returns the number of tokens in the KV cache
     public static native int llama_get_kv_cache_token_count(@Const llama_context ctx);
@@ -1737,75 +2332,6 @@ public static final int LLAMA_DEFAULT_SEED =           0xFFFFFFFF;
     public static native int llama_eval_export(llama_context ctx, @Cast("const char*") BytePointer fname);
     public static native int llama_eval_export(llama_context ctx, String fname);
 
-    // Convert the provided text into tokens.
-    // The tokens pointer must be large enough to hold the resulting tokens.
-    // Returns the number of tokens on success, no more than n_max_tokens
-    // Returns a negative number on failure - the number of tokens that would have been returned
-    // TODO: not sure if correct
-    public static native int llama_tokenize(
-                llama_context ctx,
-                          @Cast("const char*") BytePointer text,
-                         @Cast("llama_token*") IntPointer tokens,
-                                 int n_max_tokens,
-                                @Cast("bool") boolean add_bos);
-    public static native int llama_tokenize(
-                llama_context ctx,
-                          String text,
-                         @Cast("llama_token*") IntBuffer tokens,
-                                 int n_max_tokens,
-                                @Cast("bool") boolean add_bos);
-    public static native int llama_tokenize(
-                llama_context ctx,
-                          @Cast("const char*") BytePointer text,
-                         @Cast("llama_token*") int[] tokens,
-                                 int n_max_tokens,
-                                @Cast("bool") boolean add_bos);
-    public static native int llama_tokenize(
-                llama_context ctx,
-                          String text,
-                         @Cast("llama_token*") IntPointer tokens,
-                                 int n_max_tokens,
-                                @Cast("bool") boolean add_bos);
-    public static native int llama_tokenize(
-                llama_context ctx,
-                          @Cast("const char*") BytePointer text,
-                         @Cast("llama_token*") IntBuffer tokens,
-                                 int n_max_tokens,
-                                @Cast("bool") boolean add_bos);
-    public static native int llama_tokenize(
-                llama_context ctx,
-                          String text,
-                         @Cast("llama_token*") int[] tokens,
-                                 int n_max_tokens,
-                                @Cast("bool") boolean add_bos);
-
-    public static native int llama_n_vocab(@Const llama_context ctx);
-    public static native int llama_n_ctx(@Const llama_context ctx);
-    public static native int llama_n_embd(@Const llama_context ctx);
-
-    // Get the vocabulary as output parameters.
-    // Returns number of results.
-    public static native int llama_get_vocab(
-                @Const llama_context ctx,
-                              @Cast("const char**") PointerPointer strings,
-                                     FloatPointer scores,
-                                       int _capacity);
-    public static native int llama_get_vocab(
-                @Const llama_context ctx,
-                              @Cast("const char**") @ByPtrPtr BytePointer strings,
-                                     FloatPointer scores,
-                                       int _capacity);
-    public static native int llama_get_vocab(
-                @Const llama_context ctx,
-                              @Cast("const char**") @ByPtrPtr ByteBuffer strings,
-                                     FloatBuffer scores,
-                                       int _capacity);
-    public static native int llama_get_vocab(
-                @Const llama_context ctx,
-                              @Cast("const char**") @ByPtrPtr byte[] strings,
-                                     float[] scores,
-                                       int _capacity);
-
     // Token logits obtained from the last call to llama_eval()
     // The logits for the last token are stored in the last row
     // Can be mutated in order to change the probabilities of the next token
@@ -1817,15 +2343,157 @@ public static final int LLAMA_DEFAULT_SEED =           0xFFFFFFFF;
     // shape: [n_embd] (1-dimensional)
     public static native FloatPointer llama_get_embeddings(llama_context ctx);
 
-    // Token Id -> String. Uses the vocabulary in the provided context
-    public static native @Cast("const char*") BytePointer llama_token_to_str(@Const llama_context ctx, @Cast("llama_token") int token);
+    //
+    // Vocab
+    //
+
+    public static native @Cast("const char*") BytePointer llama_token_get_text(@Const llama_context ctx, @Cast("llama_token") int token);
+
+    public static native float llama_token_get_score(@Const llama_context ctx, @Cast("llama_token") int token);
+
+    public static native @Cast("llama_token_type") int llama_token_get_type(@Const llama_context ctx, @Cast("llama_token") int token);
 
     // Special tokens
-    public static native @Cast("llama_token") int llama_token_bos();  // beginning-of-sentence
-    public static native @Cast("llama_token") int llama_token_eos();  // end-of-sentence
-    public static native @Cast("llama_token") int llama_token_nl();   // next-line
+    public static native @Cast("llama_token") int llama_token_bos(@Const llama_context ctx);  // beginning-of-sentence
+    public static native @Cast("llama_token") int llama_token_eos(@Const llama_context ctx);  // end-of-sentence
+    public static native @Cast("llama_token") int llama_token_nl(@Const llama_context ctx);  // next-line
 
+    //
+    // Tokenization
+    //
+
+    // Convert the provided text into tokens.
+    // The tokens pointer must be large enough to hold the resulting tokens.
+    // Returns the number of tokens on success, no more than n_max_tokens
+    // Returns a negative number on failure - the number of tokens that would have been returned
+    public static native int llama_tokenize(
+                llama_context ctx,
+                          @Cast("const char*") BytePointer text,
+                         @Cast("llama_token*") IntPointer tokens,
+                                 int n_max_tokens,
+                                @Cast("bool") boolean add_bos);
+    public static native int llama_tokenize(
+                llama_context ctx,
+                          String text,
+                         @Cast("llama_token*") IntBuffer tokens,
+                                 int n_max_tokens,
+                                @Cast("bool") boolean add_bos);
+    public static native int llama_tokenize(
+                llama_context ctx,
+                          @Cast("const char*") BytePointer text,
+                         @Cast("llama_token*") int[] tokens,
+                                 int n_max_tokens,
+                                @Cast("bool") boolean add_bos);
+    public static native int llama_tokenize(
+                llama_context ctx,
+                          String text,
+                         @Cast("llama_token*") IntPointer tokens,
+                                 int n_max_tokens,
+                                @Cast("bool") boolean add_bos);
+    public static native int llama_tokenize(
+                llama_context ctx,
+                          @Cast("const char*") BytePointer text,
+                         @Cast("llama_token*") IntBuffer tokens,
+                                 int n_max_tokens,
+                                @Cast("bool") boolean add_bos);
+    public static native int llama_tokenize(
+                llama_context ctx,
+                          String text,
+                         @Cast("llama_token*") int[] tokens,
+                                 int n_max_tokens,
+                                @Cast("bool") boolean add_bos);
+
+    public static native int llama_tokenize_with_model(
+            @Const llama_model model,
+                          @Cast("const char*") BytePointer text,
+                         @Cast("llama_token*") IntPointer tokens,
+                                 int n_max_tokens,
+                                @Cast("bool") boolean add_bos);
+    public static native int llama_tokenize_with_model(
+            @Const llama_model model,
+                          String text,
+                         @Cast("llama_token*") IntBuffer tokens,
+                                 int n_max_tokens,
+                                @Cast("bool") boolean add_bos);
+    public static native int llama_tokenize_with_model(
+            @Const llama_model model,
+                          @Cast("const char*") BytePointer text,
+                         @Cast("llama_token*") int[] tokens,
+                                 int n_max_tokens,
+                                @Cast("bool") boolean add_bos);
+    public static native int llama_tokenize_with_model(
+            @Const llama_model model,
+                          String text,
+                         @Cast("llama_token*") IntPointer tokens,
+                                 int n_max_tokens,
+                                @Cast("bool") boolean add_bos);
+    public static native int llama_tokenize_with_model(
+            @Const llama_model model,
+                          @Cast("const char*") BytePointer text,
+                         @Cast("llama_token*") IntBuffer tokens,
+                                 int n_max_tokens,
+                                @Cast("bool") boolean add_bos);
+    public static native int llama_tokenize_with_model(
+            @Const llama_model model,
+                          String text,
+                         @Cast("llama_token*") int[] tokens,
+                                 int n_max_tokens,
+                                @Cast("bool") boolean add_bos);
+
+    // Token Id -> Piece.
+    // Uses the vocabulary in the provided context.
+    // Does not write null terminator to the buffer.
+    // User code is responsible to remove the leading whitespace of the first non-BOS token when decoding multiple tokens.
+    public static native int llama_token_to_piece(
+                @Const llama_context ctx,
+                               @Cast("llama_token") int token,
+                                      @Cast("char*") BytePointer buf,
+                                      int length);
+    public static native int llama_token_to_piece(
+                @Const llama_context ctx,
+                               @Cast("llama_token") int token,
+                                      @Cast("char*") ByteBuffer buf,
+                                      int length);
+    public static native int llama_token_to_piece(
+                @Const llama_context ctx,
+                               @Cast("llama_token") int token,
+                                      @Cast("char*") byte[] buf,
+                                      int length);
+
+    public static native int llama_token_to_piece_with_model(
+                  @Const llama_model model,
+                               @Cast("llama_token") int token,
+                                      @Cast("char*") BytePointer buf,
+                                      int length);
+    public static native int llama_token_to_piece_with_model(
+                  @Const llama_model model,
+                               @Cast("llama_token") int token,
+                                      @Cast("char*") ByteBuffer buf,
+                                      int length);
+    public static native int llama_token_to_piece_with_model(
+                  @Const llama_model model,
+                               @Cast("llama_token") int token,
+                                      @Cast("char*") byte[] buf,
+                                      int length);
+
+    //
+    // Grammar
+    //
+
+    public static native llama_grammar llama_grammar_init(
+                @Cast("const llama_grammar_element**") PointerPointer rules,
+                                     @Cast("size_t") long n_rules,
+                                     @Cast("size_t") long start_rule_index);
+    public static native llama_grammar llama_grammar_init(
+                @Const @ByPtrPtr llama_grammar_element rules,
+                                     @Cast("size_t") long n_rules,
+                                     @Cast("size_t") long start_rule_index);
+
+    public static native void llama_grammar_free(llama_grammar grammar);
+
+    //
     // Sampling functions
+    //
 
     /** \details Repetition penalty described in CTRL academic paper https://arxiv.org/abs/1909.05858, with negative logit fix. */
     public static native void llama_sample_repetition_penalty(llama_context ctx, llama_token_data_array candidates, @Cast("const llama_token*") IntPointer last_tokens, @Cast("size_t") long last_tokens_size, float penalty);
@@ -1840,14 +2508,12 @@ public static final int LLAMA_DEFAULT_SEED =           0xFFFFFFFF;
     /** \details Apply classifier-free guidance to the logits as described in academic paper "Stay on topic with Classifier-Free Guidance" https://arxiv.org/abs/2306.17806
      *  @param candidates A vector of {@code llama_token_data} containing the candidate tokens, the logits must be directly extracted from the original generation context without being sorted.
      *  \params guidance_ctx A separate context from the same model. Other than a negative prompt at the beginning, it should have all generated and user input tokens copied from the main context.
-     *  \params scale Guidance strength. 1.0f means no guidance. Higher values mean stronger guidance.
-     *  \params smooth_factor Smooth factor between guidance logits and original logits. 1.0f means only use guidance logits. 0.0f means only original logits. */
+     *  \params scale Guidance strength. 1.0f means no guidance. Higher values mean stronger guidance. */
     public static native void llama_sample_classifier_free_guidance(
                   llama_context ctx,
                 llama_token_data_array candidates,
                   llama_context guidance_ctx,
-                                 float scale,
-                                 float smooth_factor);
+                                 float scale);
 
     /** \details Sorts candidate tokens by their logits in descending order and calculate probabilities based on logits. */
     public static native void llama_sample_softmax(llama_context ctx, llama_token_data_array candidates);
@@ -1864,6 +2530,9 @@ public static final int LLAMA_DEFAULT_SEED =           0xFFFFFFFF;
     /** \details Locally Typical Sampling implementation described in the paper https://arxiv.org/abs/2202.00666. */
     public static native void llama_sample_typical(llama_context ctx, llama_token_data_array candidates, float p, @Cast("size_t") long min_keep);
     public static native void llama_sample_temperature(llama_context ctx, llama_token_data_array candidates, float temp);
+
+    /** \details Apply constraints from grammar */
+    public static native void llama_sample_grammar(llama_context ctx, llama_token_data_array candidates, @Const llama_grammar grammar);
 
     /** \details Mirostat 1.0 algorithm described in the paper https://arxiv.org/abs/2007.14966. Uses tokens instead of words.
      *  @param candidates A vector of {@code llama_token_data} containing the candidate tokens, their probabilities (p), and log-odds (logit) for the current position in the generated text.
@@ -1890,6 +2559,28 @@ public static final int LLAMA_DEFAULT_SEED =           0xFFFFFFFF;
     /** \details Randomly selects a token from the candidates based on their probabilities. */
     public static native @Cast("llama_token") int llama_sample_token(llama_context ctx, llama_token_data_array candidates);
 
+    /** \details Accepts the sampled token into the grammar */
+    public static native void llama_grammar_accept_token(llama_context ctx, llama_grammar grammar, @Cast("llama_token") int token);
+// Targeting ../llama_beam_view.java
+
+
+// Targeting ../llama_beams_state.java
+
+
+// Targeting ../llama_beam_search_callback_fn_t.java
+
+
+
+    /** \details Deterministically returns entire sentence constructed by a beam search.
+     *  @param ctx Pointer to the llama_context.
+     *  @param callback Invoked for each iteration of the beam_search loop, passing in beams_state.
+     *  @param callback_data A pointer that is simply passed back to callback.
+     *  @param n_beams Number of beams to use.
+     *  @param n_past Number of tokens already evaluated.
+     *  @param n_predict Maximum number of tokens to predict. EOS may occur earlier.
+     *  @param n_threads Number of threads as passed to llama_eval(). */
+    public static native void llama_beam_search(llama_context ctx, llama_beam_search_callback_fn_t callback, Pointer callback_data, @Cast("size_t") long n_beams, int n_past, int n_predict, int n_threads);
+
     // Performance information
     public static native @ByVal llama_timings llama_get_timings(llama_context ctx);
     public static native void llama_print_timings(llama_context ctx);
@@ -1898,13 +2589,17 @@ public static final int LLAMA_DEFAULT_SEED =           0xFFFFFFFF;
     // Print system information
     public static native @Cast("const char*") BytePointer llama_print_system_info();
 
+    // Set callback for all future logging events.
+    // If this is not called, or NULL is supplied, everything is output on stderr.
+    public static native void llama_log_set(llama_log_callback log_callback, Pointer user_data);
+
 // #ifdef __cplusplus
 // #endif
 
 // Internal API to be implemented by llama.cpp and used by tests/benchmarks only
 // #ifdef LLAMA_API_INTERNAL
 
-// #endif
+// #endif // LLAMA_API_INTERNAL
 
 // #endif // LLAMA_H
 

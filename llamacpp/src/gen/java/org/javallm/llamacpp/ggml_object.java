@@ -9,7 +9,6 @@ import org.bytedeco.javacpp.annotation.*;
 import static org.javallm.llamacpp.global.llama.*;
 
 
-
     // ggml object
     @Properties(inherit = org.javallm.llamacpp.presets.llama.class)
 public class ggml_object extends Pointer {
@@ -33,6 +32,8 @@ public class ggml_object extends Pointer {
         public native @Cast("size_t") long size(); public native ggml_object size(long setter);
 
         public native ggml_object next(); public native ggml_object next(ggml_object setter);
+
+        public native @Cast("ggml_object_type") int type(); public native ggml_object type(int setter);
 
         public native @Cast("char") byte padding(int i); public native ggml_object padding(int i, byte setter);
         @MemberGetter public native @Cast("char*") BytePointer padding();
