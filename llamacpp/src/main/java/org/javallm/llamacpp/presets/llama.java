@@ -9,7 +9,7 @@ import org.bytedeco.javacpp.tools.InfoMapper;
 
 @Properties(
         value = {
-                @Platform(include = {"ggml.h", "k_quants.h", "ggml-alloc.h", "llama.h"}, link = "llama@.1#")
+                @Platform(include = {"ggml.h", "k_quants.h", "ggml-alloc.h", "ggml-metal.h", "llama.h"}, link = "llama@.1#")
         },
         target = "org.javallm.llamacpp",
         global = "org.javallm.llamacpp.global.llama"

@@ -26,19 +26,25 @@ else
   unzip llama.cpp-$VERSION.zip
 fi
 
-#cp -r ~/Downloads/llama.cpp-master-8207214 .
+#cp -r ~/Downloads/llama.cpp-$VERSION .
 cd llama.cpp-$VERSION
+
+# apply patch
+echo "Patching ggml-metal.m..."
+cp ggml-metal.m ../../../misc/patch/ggml-metal-patched.m
 
 # build library
 echo "Building LLaMA.cpp library..."
 
-make -j8 ggml.o llama.o ggml-alloc.o k_quants.o
-ar src libggml.a ggml.o k_quants.o ggml-alloc.o
-ar src libllama.a ggml.o k_quants.o ggml-alloc.o llama.o
+LLAMA_METAL=1 make -j8 ggml.o llama.o ggml-alloc.o k_quants.o ggml-metal.o
+ar src libggml.a ggml.o k_quants.o ggml-alloc.o ggml-metal.o
+ar src libllama.a ggml.o k_quants.o ggml-alloc.o ggml-metal.o llama.o
 
 # copy lib and header files
 cp libggml.a libllama.a ../lib
-cp ggml.h llama.h ggml-alloc.h ../include
+
+cp ggml.h ggml-alloc.h ggml-metal.h ../include
+cp llama.h ../include
 
 # k_quants.h cannot be properly handled, disable this feature temporally
 sed 's/ restrict / /g' k_quants.h > k_quants-modified.h
