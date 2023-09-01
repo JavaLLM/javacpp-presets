@@ -1,8 +1,14 @@
 # JavaLLM C++ Presets
+![llama.cpp b1112](https://img.shields.io/badge/llama.cpp-%23b1112-informational)
 
-## LLaMA.cpp (Currently only works on Mac)
+## Java Binding for [LLaMA.cpp](https://github.com/ggerganov/llama.cpp)
 ### Build Instructions
-In the project root, run the following commands to build and install related Jars to your local machine:
+> [!IMPORTANT]
+> Currently this binding only works on Mac with Apple Silicon,
+> support for other major platforms (i.e., Linux, Windows etc.) is yet to come very soon!
+> Please stay tuned.
+
+In the project root, run the following commands to build and install the related jars to your local machine:
 ```shell
 mvn clean install --projects .,llamacpp
 mvn clean install -f platform --projects ../llamacpp/platform -Djavacpp.platform.host
