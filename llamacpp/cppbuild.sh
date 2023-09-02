@@ -31,17 +31,17 @@ cd llama.cpp-$VERSION
 
 # apply patch
 echo "Patching ggml-metal.m..."
-cp ggml-metal.m ../../../misc/patch/ggml-metal-patched.m
+cp ../../../misc/patch/ggml-metal-patched.m ggml-metal.m
 
 # build library
 echo "Building LLaMA.cpp library..."
 
-LLAMA_METAL=1 make -j8 ggml.o llama.o ggml-alloc.o k_quants.o ggml-metal.o
-ar src libggml.a ggml.o k_quants.o ggml-alloc.o ggml-metal.o
-ar src libllama.a ggml.o k_quants.o ggml-alloc.o ggml-metal.o llama.o
-
-# copy lib and header files
-cp libggml.a libllama.a ../lib
+mkdir -p build
+cd build
+cmake .. -DBUILD_SHARED_LIBS=ON -DLLAMA_METAL=ON -DCMAKE_INSTALL_PREFIX=$INSTALL_PATH
+make -j8
+make install
+cd ..
 
 cp ggml.h ggml-alloc.h ggml-metal.h ../include
 cp llama.h ../include

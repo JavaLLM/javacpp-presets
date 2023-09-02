@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>llamacpp-platform</artifactId>
-    <version>0.0.4</version>
+    <version>0.0.4-SNAPSHOT</version>
     <name>JavaCPP Presets Platform for llamacpp</name>
 
     <properties>
@@ -27,12 +27,12 @@
         <dependency>
             <groupId>org.javallm</groupId>
             <artifactId>llamacpp</artifactId>
-            <version>0.0.4</version>
+            <version>0.0.4-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.javallm</groupId>
             <artifactId>llamacpp</artifactId>
-            <version>0.0.4</version>
+            <version>0.0.4-SNAPSHOT</version>
             <classifier>${javacpp.platform.macosx-arm64}</classifier>
         </dependency>
     </dependencies>
