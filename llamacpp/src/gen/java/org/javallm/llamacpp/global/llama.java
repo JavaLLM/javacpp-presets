@@ -593,7 +593,7 @@ public static final int GGUF_DEFAULT_ALIGNMENT = 32;
     public static native ggml_tensor ggml_new_f32(ggml_context ctx, float value);
 
     public static native ggml_tensor ggml_dup_tensor(ggml_context ctx, @Const ggml_tensor src);
-    public static native ggml_tensor ggml_view_tensor(ggml_context ctx, @Const ggml_tensor src);
+    public static native ggml_tensor ggml_view_tensor(ggml_context ctx, ggml_tensor src);
 
     public static native ggml_tensor ggml_get_tensor(ggml_context ctx, @Cast("const char*") BytePointer name);
     public static native ggml_tensor ggml_get_tensor(ggml_context ctx, String name);
@@ -2343,6 +2343,8 @@ public static final int LLAMA_SESSION_VERSION = 1;
                                      @Cast("size_t") long start_rule_index);
 
     public static native void llama_grammar_free(llama_grammar grammar);
+
+    public static native llama_grammar llama_grammar_copy(@Const llama_grammar grammar);
 
     //
     // Sampling functions

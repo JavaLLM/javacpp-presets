@@ -1,5 +1,5 @@
 # Java Binding for [LLaMA.cpp](https://github.com/ggerganov/llama.cpp)
-![llama.cpp b1112](https://img.shields.io/badge/llama.cpp-%23b1112-informational)
+![llama.cpp b1112](https://img.shields.io/badge/llama.cpp-%23b1187-informational)
 
 ## Introduction
 This is the [javacpp](https://github.com/bytedeco/javacpp) preset, which provides a complete java API for the [LLaMA.cpp](https://github.com/ggerganov/llama.cpp) project. The main goal of LLaMA.cpp is to run LLMs (i.e., Large Language Models) on consumer-grade devices such as your Mac or PC.
@@ -24,13 +24,13 @@ Then, in order to use LLaMA APIs in your project, you should add the following d
     <dependency>
         <groupId>org.javallm</groupId>
         <artifactId>llamacpp</artifactId>
-        <version>0.0.5</version>
+        <version>0.0.6-SNAPSHOT</version>
     </dependency>
 
     <dependency>
         <groupId>org.javallm</groupId>
         <artifactId>llamacpp-platform</artifactId>
-        <version>0.0.5</version>
+        <version>0.0.6-SNAPSHOT</version>
     </dependency>
 </dependencies>
 ```
