@@ -58,6 +58,9 @@ public class ggml_tensor extends Pointer {
         public native @Cast("int64_t") long perf_cycles(); public native ggml_tensor perf_cycles(long setter);
         public native @Cast("int64_t") long perf_time_us(); public native ggml_tensor perf_time_us(long setter);
 
+        public native ggml_tensor view_src(); public native ggml_tensor view_src(ggml_tensor setter);
+        public native @Cast("size_t") long view_offs(); public native ggml_tensor view_offs(long setter);
+
         public native Pointer data(); public native ggml_tensor data(Pointer setter);
 
         public native @Cast("char") byte name(int i); public native ggml_tensor name(int i, byte setter);
