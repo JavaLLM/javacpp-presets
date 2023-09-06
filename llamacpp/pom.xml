@@ -10,7 +10,7 @@
     </parent>
 
     <artifactId>llamacpp</artifactId>
-    <version>0.0.4-SNAPSHOT</version>
+    <version>0.0.5</version>
     <name>JavaCPP Presets for LLaMA.cpp</name>
 
     <properties>

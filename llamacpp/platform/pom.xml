@@ -7,11 +7,11 @@
         <groupId>org.javallm</groupId>
         <artifactId>javacpp-presets</artifactId>
         <version>1.5.10-SNAPSHOT</version>
-        <relativePath>../../</relativePath>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <artifactId>llamacpp-platform</artifactId>
-    <version>0.0.4-SNAPSHOT</version>
+    <version>0.0.5</version>
     <name>JavaCPP Presets Platform for llamacpp</name>
 
     <properties>
@@ -27,14 +27,20 @@
         <dependency>
             <groupId>org.javallm</groupId>
             <artifactId>llamacpp</artifactId>
-            <version>0.0.4-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.javallm</groupId>
             <artifactId>llamacpp</artifactId>
-            <version>0.0.4-SNAPSHOT</version>
+            <version>${project.version}</version>
             <classifier>${javacpp.platform.macosx-arm64}</classifier>
         </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.javallm</groupId>-->
+<!--            <artifactId>llamacpp</artifactId>-->
+<!--            <version>${project.version}</version>-->
+<!--            <classifier>${javacpp.platform.macosx-x86_64}</classifier>-->
+<!--        </dependency>-->
     </dependencies>
 
     <build>
