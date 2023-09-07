@@ -56,7 +56,7 @@ runs:
         
         # decide maven phase
         MAVEN_PHASE=install
-        
+
     - name: Build project
       shell: bash
       run: |
@@ -87,3 +87,9 @@ runs:
         for i in {1..5}; do STATUS=0; mvn $MAVEN_OPTIONS -f $CI_DEPLOY_MODULE/platform/$EXT2/pom.xml && break || STATUS=$? && sleep 60; done; (exit $STATUS)
         
         echo "Built successfully"
+
+    - name: Clean up
+      shell: bash
+      run: |
+        cd $HOME
+        rm -Rf $(find .m2/repository -name '*SNAPSHOT*')
