@@ -35,12 +35,12 @@
             <version>${project.version}</version>
             <classifier>${javacpp.platform.macosx-arm64}</classifier>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.javallm</groupId>-->
-<!--            <artifactId>llamacpp</artifactId>-->
-<!--            <version>${project.version}</version>-->
-<!--            <classifier>${javacpp.platform.macosx-x86_64}</classifier>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>org.javallm</groupId>
+            <artifactId>llamacpp</artifactId>
+            <version>${project.version}</version>
+            <classifier>${javacpp.platform.macosx-x86_64}</classifier>
+        </dependency>
     </dependencies>
 
     <build>
