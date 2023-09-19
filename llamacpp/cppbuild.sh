@@ -45,13 +45,13 @@ mkdir -p build && cd build
 
 case $PLATFORM in
   windows-*)
-    cmake .. -DBUILD_SHARED_LIBS=ON
+    cmake .. -DBUILD_SHARED_LIBS=ON -DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_BUILD_TESTS=OFF
     ;;
   linux-*)
-    cmake .. -DBUILD_SHARED_LIBS=ON
+    cmake .. -DBUILD_SHARED_LIBS=ON -DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_BUILD_TESTS=OFF
     ;;
   macosx-*)
-    cmake .. -DBUILD_SHARED_LIBS=ON -DLLAMA_METAL=ON
+    cmake .. -DBUILD_SHARED_LIBS=ON -DLLAMA_METAL=ON -DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_BUILD_TESTS=OFF
     ;;
 esac
 
