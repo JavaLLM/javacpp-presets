@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - llamacpp/**
+      - .github/actions/**
       - .github/workflows/llamacpp.yml
 env:
   CI_DEPLOY_MODULE: ${{ github.workflow }}
