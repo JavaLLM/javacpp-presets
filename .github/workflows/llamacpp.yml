@@ -14,4 +14,4 @@ jobs:
       matrix:
         ext: [ "" ]
     steps:
-      - uses: javallm/javacpp-presets/.github/actions/deploy-ubuntu@actions
+      - uses: ./.github/actions/deploy-ubuntu@actions
