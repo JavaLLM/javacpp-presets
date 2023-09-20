@@ -1,5 +1,6 @@
 name: llamacpp
 on:
+  workflow_dispatch:
   push:
     paths:
       - llamacpp/**
@@ -14,4 +15,6 @@ jobs:
       matrix:
         ext: [ "" ]
     steps:
-      - uses: ./.github/actions/deploy-ubuntu@actions
+      - uses: actions/checkout@v4
+      - name: composite
+        uses: ./.github/actions/deploy-ubuntu@actions
