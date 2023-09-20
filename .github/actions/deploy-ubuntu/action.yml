@@ -26,18 +26,18 @@ runs:
         echo "ARCH=$ARCH" >> $GITHUB_ENV
         echo "PREFIX=$PREFIX" >> $GITHUB_ENV
         
-        $SUDO dpkg --list
-        $SUDO apt-get update
+        sudo dpkg --list
+        sudo apt-get update
         
         # install basic packages
         echo "Installing basic tools [wget/curl/unzip/tar/patch]..."
-        $SUDO apt-get -y install wget curl unzip tar patch
+        sudo apt-get -y install wget curl unzip tar patch
         
         # install CMake
         echo "Installing CMake..."
         curl -LO https://github.com/Kitware/CMake/releases/download/v3.24.2/cmake-3.24.2-linux-x86_64.tar.gz
-        $SUDO tar -xzf cmake-3.24.2-linux-x86_64.tar.gz -C /opt/
-        $SUDO ln -sf /opt/cmake-3.24.2-linux-x86_64/bin/* /usr/bin/
+        sudo tar -xzf cmake-3.24.2-linux-x86_64.tar.gz -C /opt/
+        sudo ln -sf /opt/cmake-3.24.2-linux-x86_64/bin/* /usr/bin/
         
         # decide maven phase
         MAVEN_PHASE=install
