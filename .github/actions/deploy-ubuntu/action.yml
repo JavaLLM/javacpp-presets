@@ -11,14 +11,6 @@ runs:
     - name: Setup build toolchain
       shell: bash
       run: |
-        echo "SUDO=$SUDO" >> $GITHUB_ENV
-        if [[ -z "$SUDO" ]]; then
-        echo "Fixing HOME to /root (was '$HOME')"
-        export HOME=/root
-        echo "HOME=$HOME" >> $GITHUB_ENV
-        fi
-        cd $HOME
-        
         # arch
         export ARCH=amd64
         export PREFIX=x86_64-linux-gnu
