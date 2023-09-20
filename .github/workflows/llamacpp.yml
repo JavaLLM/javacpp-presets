@@ -1,8 +1,6 @@
 name: llamacpp
 on:
   push:
-    branches:
-      - master
     paths:
       - llamacpp/**
       - .github/workflows/llamacpp.yml
