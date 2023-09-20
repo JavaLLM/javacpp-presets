@@ -1,6 +1,5 @@
 name: llamacpp
 on:
-  workflow_dispatch:
   push:
     paths:
       - llamacpp/**
