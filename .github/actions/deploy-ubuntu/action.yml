@@ -62,10 +62,13 @@ runs:
         
         # process preset
         echo "Building presets..."
-        for i in {1..5}; do STATUS=0; mvn $MAVEN_OPTIONS -pl .,$CI_DEPLOY_MODULE && break || STATUS=$? && sleep 60; done; (exit $STATUS)
+        echo "Executing: mvn $MAVEN_OPTIONS --projects .,$CI_DEPLOY_MODULE"
+        for i in {1..5}; do STATUS=0; mvn $MAVEN_OPTIONS --projects .,$CI_DEPLOY_MODULE && break || STATUS=$? && sleep 60; done; (exit $STATUS)
+        
         # process platform
         echo "Build platform..."
-        for i in {1..5}; do STATUS=0; mvn $MAVEN_OPTIONS -f $CI_DEPLOY_MODULE/platform/$EXT2/pom.xml && break || STATUS=$? && sleep 60; done; (exit $STATUS)
+        echo "Executing: mvn $MAVEN_OPTIONS -f platform --projects ../$CI_DEPLOY_MODULE/platform -Djavacpp.platform.host"
+        for i in {1..5}; do STATUS=0; mvn $MAVEN_OPTIONS -f platform --projects ../$CI_DEPLOY_MODULE/platform -Djavacpp.platform.host && break || STATUS=$? && sleep 60; done; (exit $STATUS)
         
         echo "Built jars successfully"
     - name: Clean up
