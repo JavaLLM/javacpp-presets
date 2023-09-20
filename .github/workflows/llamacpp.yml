@@ -17,4 +17,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: composite
-        uses: ./github/actions/deploy-ubuntu
+        uses: ./.github/actions/deploy-ubuntu
