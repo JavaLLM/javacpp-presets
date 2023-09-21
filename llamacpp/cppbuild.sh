@@ -46,23 +46,26 @@ echo "Building LLaMA.cpp library..."
 
 mkdir -p build && cd build
 
+CMAKE_FLAGS="-DBUILD_SHARED_LIBS=ON -DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_BUILD_TESTS=OFF"
+
 case $PLATFORM in
   windows-*)
-    cmake .. $CMAKE_COMMON_OPTS -DLLAMA_AVX=ON -DLLAMA_AVX2=ON
+    CMAKE_FLAGS="$CMAKE_FLAGS -DLLAMA_AVX=ON -DLLAMA_AVX2=ON"
     ;;
   linux-*)
+    CMAKE_FLAGS="$CMAKE_FLAGS -DLLAMA_AVX=ON -DLLAMA_AVX2=ON"
     if [[ "$EXTENSION" == *cuda ]]; then
       echo "Build with CUDA extension"
-      cmake .. -DBUILD_SHARED_LIBS=ON -DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_AVX=ON -DLLAMA_AVX2=ON -DLLAMA_CUBLAS=ON
-    else
-      cmake .. -DBUILD_SHARED_LIBS=ON -DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_AVX=ON -DLLAMA_AVX2=ON
+      CMAKE_FLAGS="$CMAKE_FLAGS -DLLAMA_CUBLAS=ON"
     fi
     ;;
   macosx-*)
     cmake .. -DBUILD_SHARED_LIBS=ON -DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_BUILD_TESTS=OFF
     ;;
 esac
+echo "CMake Flags: $CMAKE_FLAGS"
 
+cmake .. $CMAKE_FLAGS
 cmake --build . --parallel 8 --config Release
 cmake --install . --prefix="$INSTALL_PATH"
 
