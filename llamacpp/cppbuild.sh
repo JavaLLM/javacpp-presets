@@ -10,8 +10,10 @@ if [[ -z "$PLATFORM" ]]; then
     exit
 fi
 
-mkdir -p "$PLATFORM"
-cd "$PLATFORM"
+ROOT_PATH=$(dirname "$(pwd)")
+
+mkdir -p "$PLATFORM$EXTENSION"
+cd "$PLATFORM$EXTENSION"
 INSTALL_PATH=$(pwd)
 mkdir -p include lib bin
 
@@ -36,7 +38,8 @@ cp ggml.h llama.h ../include
 
 # apply patch
 echo "Patching ggml-metal.m..."
-cp ../../../misc/patch/ggml-metal-patched.m ggml-metal.m
+
+cp "$ROOT_PATH/misc/patch/ggml-metal-patched.m" ggml-metal.m
 
 # build library
 echo "Building LLaMA.cpp library..."
