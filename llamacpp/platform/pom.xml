@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>llamacpp-platform</artifactId>
-    <version>0.0.6-SNAPSHOT</version>
+    <version>b1266</version>
     <name>JavaCPP Presets Platform for llamacpp</name>
 
     <properties>
