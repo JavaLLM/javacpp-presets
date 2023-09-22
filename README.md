@@ -24,13 +24,13 @@ Then, in order to use LLaMA APIs in your project, you should add the following d
     <dependency>
         <groupId>org.javallm</groupId>
         <artifactId>llamacpp</artifactId>
-        <version>0.0.6-SNAPSHOT</version>
+        <version>b1266</version>
     </dependency>
 
     <dependency>
         <groupId>org.javallm</groupId>
         <artifactId>llamacpp-platform</artifactId>
-        <version>0.0.6-SNAPSHOT</version>
+        <version>b1266</version>
     </dependency>
 </dependencies>
 ```

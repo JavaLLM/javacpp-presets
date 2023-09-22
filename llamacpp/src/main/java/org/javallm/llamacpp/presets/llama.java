@@ -10,10 +10,21 @@ import org.bytedeco.javacpp.tools.InfoMapper;
 @Properties(
         value = {
                 @Platform(
-                        value = {"macosx-arm64"},
+                        value = {"macosx-arm64", "macosx-amd64"},
                         include = {"ggml.h", "llama.h"},
                         link = {"llama@.1#"}
-                )
+                ),
+                @Platform(
+                        value = {"linux-x86_64"},
+                        include = {"ggml.h", "llama.h"},
+                        link = {"llama@.1#"}
+                ),
+                @Platform(
+                        value = {"linux-x86_64"},
+                        include = {"ggml.h", "llama.h"},
+                        link = {"llama@.1#"},
+                        extension={"-cuda"}
+                ),
         },
         target = "org.javallm.llamacpp",
         global = "org.javallm.llamacpp.global.llama"

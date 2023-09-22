@@ -201,6 +201,14 @@ public class llama extends org.javallm.llamacpp.presets.llama {
 // #    define GGML_DEPRECATED(func, hint) func
 // #endif
 
+// #ifndef __GNUC__
+// #    define GGML_ATTRIBUTE_FORMAT(...)
+// #elif defined(__MINGW32__)
+// #    define GGML_ATTRIBUTE_FORMAT(...) __attribute__((format(gnu_printf, __VA_ARGS__)))
+// #else
+// #    define GGML_ATTRIBUTE_FORMAT(...) __attribute__((format(printf, __VA_ARGS__)))
+// #endif
+
 // #include <stdint.h>
 // #include <stddef.h>
 // #include <stdbool.h>
@@ -1717,41 +1725,41 @@ public static final int GGUF_DEFAULT_ALIGNMENT = 32;
 
     public static native @Cast("const char*") BytePointer gguf_type_name(@Cast("gguf_type") int type);
 
-    public static native int gguf_get_version(gguf_context ctx);
-    public static native @Cast("size_t") long gguf_get_alignment(gguf_context ctx);
-    public static native @Cast("size_t") long gguf_get_data_offset(gguf_context ctx);
-    public static native Pointer gguf_get_data(gguf_context ctx);
+    public static native int gguf_get_version(@Const gguf_context ctx);
+    public static native @Cast("size_t") long gguf_get_alignment(@Const gguf_context ctx);
+    public static native @Cast("size_t") long gguf_get_data_offset(@Const gguf_context ctx);
+    public static native Pointer gguf_get_data(@Const gguf_context ctx);
 
-    public static native int gguf_get_n_kv(gguf_context ctx);
-    public static native int gguf_find_key(gguf_context ctx, @Cast("const char*") BytePointer key);
-    public static native int gguf_find_key(gguf_context ctx, String key);
-    public static native @Cast("const char*") BytePointer gguf_get_key(gguf_context ctx, int i);
+    public static native int gguf_get_n_kv(@Const gguf_context ctx);
+    public static native int gguf_find_key(@Const gguf_context ctx, @Cast("const char*") BytePointer key);
+    public static native int gguf_find_key(@Const gguf_context ctx, String key);
+    public static native @Cast("const char*") BytePointer gguf_get_key(@Const gguf_context ctx, int i);
 
-    public static native @Cast("gguf_type") int gguf_get_kv_type(gguf_context ctx, int i);
-    public static native @Cast("gguf_type") int gguf_get_arr_type(gguf_context ctx, int i);
+    public static native @Cast("gguf_type") int gguf_get_kv_type(@Const gguf_context ctx, int i);
+    public static native @Cast("gguf_type") int gguf_get_arr_type(@Const gguf_context ctx, int i);
 
     // results are undefined if the wrong type is used for the key
-    public static native @Cast("uint8_t") byte gguf_get_val_u8(gguf_context ctx, int i);
-    public static native byte gguf_get_val_i8(gguf_context ctx, int i);
-    public static native @Cast("uint16_t") short gguf_get_val_u16(gguf_context ctx, int i);
-    public static native short gguf_get_val_i16(gguf_context ctx, int i);
-    public static native @Cast("uint32_t") int gguf_get_val_u32(gguf_context ctx, int i);
-    public static native int gguf_get_val_i32(gguf_context ctx, int i);
-    public static native float gguf_get_val_f32(gguf_context ctx, int i);
-    public static native @Cast("uint64_t") long gguf_get_val_u64(gguf_context ctx, int i);
-    public static native @Cast("int64_t") long gguf_get_val_i64(gguf_context ctx, int i);
-    public static native double gguf_get_val_f64(gguf_context ctx, int i);
-    public static native @Cast("bool") boolean gguf_get_val_bool(gguf_context ctx, int i);
-    public static native @Cast("const char*") BytePointer gguf_get_val_str(gguf_context ctx, int i);
-    public static native int gguf_get_arr_n(gguf_context ctx, int i);
-    public static native @Const Pointer gguf_get_arr_data(gguf_context ctx, int i);
-    public static native @Cast("const char*") BytePointer gguf_get_arr_str(gguf_context ctx, int key_id, int i);
+    public static native @Cast("uint8_t") byte gguf_get_val_u8(@Const gguf_context ctx, int i);
+    public static native byte gguf_get_val_i8(@Const gguf_context ctx, int i);
+    public static native @Cast("uint16_t") short gguf_get_val_u16(@Const gguf_context ctx, int i);
+    public static native short gguf_get_val_i16(@Const gguf_context ctx, int i);
+    public static native @Cast("uint32_t") int gguf_get_val_u32(@Const gguf_context ctx, int i);
+    public static native int gguf_get_val_i32(@Const gguf_context ctx, int i);
+    public static native float gguf_get_val_f32(@Const gguf_context ctx, int i);
+    public static native @Cast("uint64_t") long gguf_get_val_u64(@Const gguf_context ctx, int i);
+    public static native @Cast("int64_t") long gguf_get_val_i64(@Const gguf_context ctx, int i);
+    public static native double gguf_get_val_f64(@Const gguf_context ctx, int i);
+    public static native @Cast("bool") boolean gguf_get_val_bool(@Const gguf_context ctx, int i);
+    public static native @Cast("const char*") BytePointer gguf_get_val_str(@Const gguf_context ctx, int i);
+    public static native int gguf_get_arr_n(@Const gguf_context ctx, int i);
+    public static native @Const Pointer gguf_get_arr_data(@Const gguf_context ctx, int i);
+    public static native @Cast("const char*") BytePointer gguf_get_arr_str(@Const gguf_context ctx, int key_id, int i);
 
-    public static native int gguf_get_n_tensors(gguf_context ctx);
-    public static native int gguf_find_tensor(gguf_context ctx, @Cast("const char*") BytePointer name);
-    public static native int gguf_find_tensor(gguf_context ctx, String name);
-    public static native @Cast("size_t") long gguf_get_tensor_offset(gguf_context ctx, int i);
-    public static native @Cast("char*") BytePointer gguf_get_tensor_name(gguf_context ctx, int i);
+    public static native int gguf_get_n_tensors(@Const gguf_context ctx);
+    public static native int gguf_find_tensor(@Const gguf_context ctx, @Cast("const char*") BytePointer name);
+    public static native int gguf_find_tensor(@Const gguf_context ctx, String name);
+    public static native @Cast("size_t") long gguf_get_tensor_offset(@Const gguf_context ctx, int i);
+    public static native @Cast("char*") BytePointer gguf_get_tensor_name(@Const gguf_context ctx, int i);
 
     // overrides existing values or adds a new one
     public static native void gguf_set_val_u8(gguf_context ctx, @Cast("const char*") BytePointer key, @Cast("uint8_t") byte val);
@@ -1817,12 +1825,12 @@ public static final int GGUF_DEFAULT_ALIGNMENT = 32;
     //
 
     // write the entire context to a binary file
-    public static native void gguf_write_to_file(gguf_context ctx, @Cast("const char*") BytePointer fname, @Cast("bool") boolean only_meta);
-    public static native void gguf_write_to_file(gguf_context ctx, String fname, @Cast("bool") boolean only_meta);
+    public static native void gguf_write_to_file(@Const gguf_context ctx, @Cast("const char*") BytePointer fname, @Cast("bool") boolean only_meta);
+    public static native void gguf_write_to_file(@Const gguf_context ctx, String fname, @Cast("bool") boolean only_meta);
 
     // get the size in bytes of the meta data (header, kv pairs, tensor info) including padding
-    public static native @Cast("size_t") long gguf_get_meta_size(gguf_context ctx);
-    public static native void gguf_get_meta_data(gguf_context ctx, Pointer data);
+    public static native @Cast("size_t") long gguf_get_meta_size(@Const gguf_context ctx);
+    public static native void gguf_get_meta_data(@Const gguf_context ctx, Pointer data);
 
     //
     // system info
@@ -1836,6 +1844,7 @@ public static final int GGUF_DEFAULT_ALIGNMENT = 32;
     public static native int ggml_cpu_has_fma();
     public static native int ggml_cpu_has_neon();
     public static native int ggml_cpu_has_arm_fma();
+    public static native int ggml_cpu_has_metal();
     public static native int ggml_cpu_has_f16c();
     public static native int ggml_cpu_has_fp16_va();
     public static native int ggml_cpu_has_wasm_simd();
@@ -2052,12 +2061,14 @@ public static final int LLAMA_SESSION_VERSION = 1;
 
     public static native int llama_n_vocab(@Const llama_context ctx);
     public static native int llama_n_ctx(@Const llama_context ctx);
+    public static native int llama_n_ctx_train(@Const llama_context ctx);
     public static native int llama_n_embd(@Const llama_context ctx);
 
     
 
     public static native int llama_model_n_vocab(@Const llama_model model);
     public static native int llama_model_n_ctx(@Const llama_model model);
+    public static native int llama_model_n_ctx_train(@Const llama_model model);
     public static native int llama_model_n_embd(@Const llama_model model);
 
     // Get a string describing the model type
@@ -2222,36 +2233,42 @@ public static final int LLAMA_SESSION_VERSION = 1;
     public static native int llama_tokenize(
                 llama_context ctx,
                           @Cast("const char*") BytePointer text,
+                                 int text_len,
                          @Cast("llama_token*") IntPointer tokens,
                                  int n_max_tokens,
                                 @Cast("bool") boolean add_bos);
     public static native int llama_tokenize(
                 llama_context ctx,
                           String text,
+                                 int text_len,
                          @Cast("llama_token*") IntBuffer tokens,
                                  int n_max_tokens,
                                 @Cast("bool") boolean add_bos);
     public static native int llama_tokenize(
                 llama_context ctx,
                           @Cast("const char*") BytePointer text,
+                                 int text_len,
                          @Cast("llama_token*") int[] tokens,
                                  int n_max_tokens,
                                 @Cast("bool") boolean add_bos);
     public static native int llama_tokenize(
                 llama_context ctx,
                           String text,
+                                 int text_len,
                          @Cast("llama_token*") IntPointer tokens,
                                  int n_max_tokens,
                                 @Cast("bool") boolean add_bos);
     public static native int llama_tokenize(
                 llama_context ctx,
                           @Cast("const char*") BytePointer text,
+                                 int text_len,
                          @Cast("llama_token*") IntBuffer tokens,
                                  int n_max_tokens,
                                 @Cast("bool") boolean add_bos);
     public static native int llama_tokenize(
                 llama_context ctx,
                           String text,
+                                 int text_len,
                          @Cast("llama_token*") int[] tokens,
                                  int n_max_tokens,
                                 @Cast("bool") boolean add_bos);
@@ -2259,36 +2276,42 @@ public static final int LLAMA_SESSION_VERSION = 1;
     public static native int llama_tokenize_with_model(
             @Const llama_model model,
                           @Cast("const char*") BytePointer text,
+                                 int text_len,
                          @Cast("llama_token*") IntPointer tokens,
                                  int n_max_tokens,
                                 @Cast("bool") boolean add_bos);
     public static native int llama_tokenize_with_model(
             @Const llama_model model,
                           String text,
+                                 int text_len,
                          @Cast("llama_token*") IntBuffer tokens,
                                  int n_max_tokens,
                                 @Cast("bool") boolean add_bos);
     public static native int llama_tokenize_with_model(
             @Const llama_model model,
                           @Cast("const char*") BytePointer text,
+                                 int text_len,
                          @Cast("llama_token*") int[] tokens,
                                  int n_max_tokens,
                                 @Cast("bool") boolean add_bos);
     public static native int llama_tokenize_with_model(
             @Const llama_model model,
                           String text,
+                                 int text_len,
                          @Cast("llama_token*") IntPointer tokens,
                                  int n_max_tokens,
                                 @Cast("bool") boolean add_bos);
     public static native int llama_tokenize_with_model(
             @Const llama_model model,
                           @Cast("const char*") BytePointer text,
+                                 int text_len,
                          @Cast("llama_token*") IntBuffer tokens,
                                  int n_max_tokens,
                                 @Cast("bool") boolean add_bos);
     public static native int llama_tokenize_with_model(
             @Const llama_model model,
                           String text,
+                                 int text_len,
                          @Cast("llama_token*") int[] tokens,
                                  int n_max_tokens,
                                 @Cast("bool") boolean add_bos);

@@ -12,10 +12,11 @@
 
     <artifactId>llamacpp-platform</artifactId>
     <version>b1266</version>
-    <name>JavaCPP Presets Platform for llamacpp</name>
+    <name>JavaCPP Presets Platform for llama.cpp (CUDA)</name>
 
     <properties>
         <javacpp.moduleId>llamacpp</javacpp.moduleId>
+        <javacpp.platform.extension>-cuda</javacpp.platform.extension>
     </properties>
 
     <dependencies>
@@ -28,18 +29,6 @@
             <groupId>org.javallm</groupId>
             <artifactId>llamacpp</artifactId>
             <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.javallm</groupId>
-            <artifactId>llamacpp</artifactId>
-            <version>${project.version}</version>
-            <classifier>${javacpp.platform.macosx-arm64}</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.javallm</groupId>
-            <artifactId>llamacpp</artifactId>
-            <version>${project.version}</version>
-            <classifier>${javacpp.platform.macosx-x86_64}</classifier>
         </dependency>
         <dependency>
             <groupId>org.javallm</groupId>
@@ -59,7 +48,7 @@
                         <configuration>
                             <archive>
                                 <manifestEntries>
-                                    <Class-Path>${javacpp.moduleId}.jar ${javacpp.moduleId}-linux-x86.jar ${javacpp.moduleId}-linux-x86_64.jar ${javacpp.moduleId}-linux-armhf.jar ${javacpp.moduleId}-linux-arm64.jar ${javacpp.moduleId}-linux-ppc64le.jar ${javacpp.moduleId}-macosx-arm64.jar ${javacpp.moduleId}-macosx-x86_64.jar ${javacpp.moduleId}-windows-x86.jar ${javacpp.moduleId}-windows-x86_64.jar</Class-Path>
+                                    <Class-Path>${javacpp.moduleId}.jar ${javacpp.moduleId}-linux-x86_64-cuda.jar</Class-Path>
                                 </manifestEntries>
                             </archive>
                         </configuration>
@@ -103,8 +92,8 @@
                                 <module>
                                     <file>${project.build.directory}/${project.artifactId}.jar</file>
                                     <moduleInfoSource>
-                                        module org.javallm.${javacpp.moduleId}.platform {
-                                        requires static org.javallm.${javacpp.moduleId}.macosx.arm64;
+                                        module org.javallm.${javacpp.moduleId}.platform.cuda {
+                                            requires static org.javallm.${javacpp.moduleId}.linux.x86_64.cuda;
                                         }
                                     </moduleInfoSource>
                                 </module>

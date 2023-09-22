@@ -1,0 +1,20 @@
+name: llamacpp
+on:
+  push:
+    paths:
+      - llamacpp/**
+      - .github/actions/**
+      - .github/workflows/llamacpp.yml
+env:
+  CI_DEPLOY_MODULE: ${{ github.workflow }}
+  CI_DEPLOY_PLATFORM: ${{ github.job }}
+jobs:
+  linux-x86_64:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        ext: [ "" ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: composite
+        uses: ./.github/actions/deploy-ubuntu

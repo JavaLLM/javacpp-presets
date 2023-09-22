@@ -1,0 +1,78 @@
+name: Deploy on Ubuntu
+description: Deploy on Ubuntu Linux
+runs:
+  using: composite
+  steps:
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        java-version: '8'
+        distribution: 'temurin'
+    - name: Setup build toolchain
+      shell: bash
+      run: |
+        # arch
+        export ARCH=amd64
+        export PREFIX=x86_64-linux-gnu
+        
+        if [[ "$CI_DEPLOY_PLATFORM" == "linux-x86_64" ]]; then
+          export ARCH=amd64
+          export PREFIX=x86_64-linux-gnu
+        elif [[ "$CI_DEPLOY_PLATFORM" == "linux-x86" ]]; then
+          export ARCH=i386
+          export PREFIX=i686-linux-gnu
+        fi
+        
+        echo "ARCH=$ARCH" >> $GITHUB_ENV
+        echo "PREFIX=$PREFIX" >> $GITHUB_ENV
+        
+        sudo dpkg --list
+        sudo apt-get update
+        
+        # install basic packages
+        echo "Installing basic tools [wget/curl/unzip/tar/patch]..."
+        sudo apt-get -y install wget curl unzip tar patch
+        
+        # install CMake
+        echo "Installing CMake..."
+        curl -LO https://github.com/Kitware/CMake/releases/download/v3.24.2/cmake-3.24.2-linux-x86_64.tar.gz
+        sudo tar -xzf cmake-3.24.2-linux-x86_64.tar.gz -C /opt/
+        sudo ln -sf /opt/cmake-3.24.2-linux-x86_64/bin/* /usr/bin/
+        
+        # decide maven phase
+        MAVEN_PHASE=install
+    - name: Build jar
+      shell: bash
+      run: |
+        git --version
+        cmake --version
+        mvn --version
+        
+        df -h
+        
+        mkdir -p $HOME/.m2
+        
+        export MAKEJ=$(getconf _NPROCESSORS_ONLN)
+        
+        echo "Executing Maven $MAVEN_PHASE on $MAKEJ processors"
+        export EXT=${{ matrix.ext }}
+        export EXT2=${EXT:1}
+        export MAVEN_OPTS="-Xss2m -Xmx4g"
+        export MAVEN_OPTIONS="clean $MAVEN_PHASE -B -U -e -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.http.retryHandler.count=3 -Djavacpp.platform=$CI_DEPLOY_PLATFORM $MAVEN_OPTS $CI_DEPLOY_OPTIONS"
+        
+        # process preset
+        echo "Building presets..."
+        echo "Executing: mvn $MAVEN_OPTIONS --projects .,$CI_DEPLOY_MODULE"
+        for i in {1..5}; do STATUS=0; mvn $MAVEN_OPTIONS --projects .,$CI_DEPLOY_MODULE && break || STATUS=$? && sleep 60; done; (exit $STATUS)
+        
+        # process platform
+        echo "Build platform..."
+        echo "Executing: mvn $MAVEN_OPTIONS -f platform --projects ../$CI_DEPLOY_MODULE/platform -Djavacpp.platform.host"
+        for i in {1..5}; do STATUS=0; mvn $MAVEN_OPTIONS -f platform --projects ../$CI_DEPLOY_MODULE/platform -Djavacpp.platform.host && break || STATUS=$? && sleep 60; done; (exit $STATUS)
+        
+        echo "Built jars successfully"
+    - name: Clean up
+      shell: bash
+      run: |
+        cd $HOME
+        rm -Rf $(find .m2/repository -name '*SNAPSHOT*')
