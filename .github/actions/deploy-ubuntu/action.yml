@@ -41,7 +41,8 @@ runs:
         
         # decide maven phase
         MAVEN_PHASE=install
-    - name: Build jar
+        echo "MAVEN_PHASE=$MAVEN_PHASE" >> $GITHUB_ENV
+    - name: Build artifacts
       shell: bash
       run: |
         git --version
@@ -57,8 +58,9 @@ runs:
         echo "Executing Maven $MAVEN_PHASE on $MAKEJ processors"
         export EXT=${{ matrix.ext }}
         export EXT2=${EXT:1}
+        echo "JavaCPP platform extensions = $EXT2"
         export MAVEN_OPTS="-Xss2m -Xmx4g"
-        export MAVEN_OPTIONS="clean $MAVEN_PHASE -B -U -e -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.http.retryHandler.count=3 -Djavacpp.platform=$CI_DEPLOY_PLATFORM $MAVEN_OPTS $CI_DEPLOY_OPTIONS"
+        export MAVEN_OPTIONS="clean $MAVEN_PHASE -B -U -e -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.http.retryHandler.count=3 $MAVEN_OPTIONS $CI_DEPLOY_OPTIONS"
         
         # process preset
         echo "Building presets..."
@@ -71,8 +73,8 @@ runs:
         for i in {1..5}; do STATUS=0; mvn $MAVEN_OPTIONS -f platform --projects ../$CI_DEPLOY_MODULE/platform -Djavacpp.platform.host && break || STATUS=$? && sleep 60; done; (exit $STATUS)
         
         echo "Built jars successfully"
-    - name: Clean up
-      shell: bash
-      run: |
-        cd $HOME
-        rm -Rf $(find .m2/repository -name '*SNAPSHOT*')
+    - name: Publish artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: artifacts
+        path: ${{ github.workspace }}/llamacpp/target/*.jar
