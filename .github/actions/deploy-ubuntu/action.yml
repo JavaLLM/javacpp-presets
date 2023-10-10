@@ -74,7 +74,7 @@ runs:
         
         echo "Built jars successfully"
     - name: Publish artifacts
-      uses: @actions/upload-artifact@v3
+      uses: actions/upload-artifact@v3
       with:
         name: artifacts
         path: ${{ github.workspace}}/javacpp-presets/llamacpp/target/*.jar
