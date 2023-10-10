@@ -77,4 +77,4 @@ runs:
       uses: actions/upload-artifact@v3
       with:
         name: artifacts
-        path: ${{ github.workspace}}/javacpp-presets/llamacpp/target/*.jar
+        path: ${{ github.workspace }}/llamacpp/target/*.jar
