@@ -60,7 +60,7 @@ runs:
         export EXT2=${EXT:1}
         echo "JavaCPP platform extensions = $EXT2"
         export MAVEN_OPTS="-Xss2m -Xmx4g"
-        export MAVEN_OPTIONS="clean $MAVEN_PHASE -B -U -e -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.http.retryHandler.count=3 -Djavacpp.platform=$CI_DEPLOY_PLATFORM $MAVEN_OPTS $CI_DEPLOY_OPTIONS"
+        export MAVEN_OPTIONS="clean $MAVEN_PHASE -B -U -e -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.http.retryHandler.count=3 $MAVEN_OPTS $CI_DEPLOY_OPTIONS"
         
         # process preset
         echo "Building presets..."
