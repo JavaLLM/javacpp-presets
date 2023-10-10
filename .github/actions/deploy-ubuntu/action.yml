@@ -41,6 +41,7 @@ runs:
         
         # decide maven phase
         MAVEN_PHASE=install
+        echo "MAVEN_PHASE=$MAVEN_PHASE" >> $GITHUB_ENV
     - name: Build jar
       shell: bash
       run: |
